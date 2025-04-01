@@ -109,13 +109,6 @@ function App() {
                     <div className="text-xs text-gray-500">Relationships</div>
                   </div>
                 </div>
-                <div className="bg-green-50 p-3 rounded-md flex items-center gap-2">
-                  <Network className="h-5 w-5 text-green-500" />
-                  <div>
-                    <div className="text-sm font-medium">{Math.round(bookData.analysis.relationships.reduce((sum, rel) => sum + rel.strength, 0) / bookData.analysis.relationships.length * 10) / 10}</div>
-                    <div className="text-xs text-gray-500">Avg. Relationship Strength</div>
-                  </div>
-                </div>
                 {bookData.analysis.meta.analysisDate && (
                   <div className="bg-amber-50 p-3 rounded-md flex items-center gap-2">
                     <Book className="h-5 w-5 text-amber-500" />
