@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, Network, Users, Link } from "lucide-react";
+import { Book, Network, Users, Link, Zap, SearchCheck } from "lucide-react";
 import NetworkGraph from './components/NetworkGraph';
 import CharacterList from './components/CharacterList';
 import RelationshipDetail from './components/RelationshipDetails';
@@ -16,8 +16,9 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("network");
+  const [analysisMode, setAnalysisMode] = useState<'fast' | 'detailed'>('fast');
 
-  const fetchBookAnalysis = async (bookId: string) => {
+  const fetchBookAnalysis = async (bookId: string, analysisType: 'fast' | 'detailed' = 'fast') => {
     if (!bookId.trim()) {
       setError("Please enter a book ID");
       return;
@@ -25,10 +26,15 @@ function App() {
 
     setLoading(true);
     setError(null);
+    setAnalysisMode(analysisType);
 
     try {
       // Use localhost:3000 for development, and the Render backend URL for production
       const apiBaseUrl = import.meta.env.DEV ? 'http://localhost:3000' : 'https://sarj-book-analysis-backend.onrender.com';
+      
+      // Set chunk size based on analysis type
+      const chunkSize = analysisType === 'detailed' ? 30000 : 90000;
+      
       const response = await fetch(`${apiBaseUrl}/api/analysis/${bookId}/full`, {
         method: 'POST',
         headers: {
@@ -38,7 +44,7 @@ function App() {
           options: {
             provider: "sambanova",
             batchSize: 3,
-            chunkSize: 90000,
+            chunkSize: chunkSize,
             delayBetweenBatches: 500,
             overrideCache: false
           }
@@ -82,7 +88,35 @@ function App() {
         </Alert>
       )}
 
-      {loading && <LoadingState />}
+      {loading && (
+        <div className="space-y-4">
+          <LoadingState />
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <span className="inline-flex items-center">
+                {analysisMode === 'fast' ? (
+                  <>
+                    <Zap className="h-4 w-4 mr-1 text-amber-500" />
+                    Fast Analysis
+                  </>
+                ) : (
+                  <>
+                    <SearchCheck className="h-4 w-4 mr-1 text-blue-500" />
+                    Detailed Analysis
+                  </>
+                )}
+              </span>
+              <span>•</span>
+              <span>Chunk Size: {analysisMode === 'detailed' ? '30,000' : '90,000'}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {analysisMode === 'detailed' 
+                ? 'Using smaller chunks for more thorough analysis (takes longer)' 
+                : 'Using larger chunks for faster analysis'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {!loading && bookData && (
         <div className="space-y-8 flex-grow">
@@ -119,6 +153,17 @@ function App() {
                     </div>
                   </div>
                 )}
+                <div className={`p-3 rounded-md flex items-center gap-2 ${analysisMode === 'detailed' ? 'bg-blue-50' : 'bg-amber-50'}`}>
+                  {analysisMode === 'detailed' ? (
+                    <SearchCheck className="h-5 w-5 text-blue-500" />
+                  ) : (
+                    <Zap className="h-5 w-5 text-amber-500" />
+                  )}
+                  <div>
+                    <div className="text-sm font-medium">{analysisMode === 'detailed' ? 'Detailed' : 'Fast'}</div>
+                    <div className="text-xs text-gray-500">Analysis Type</div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

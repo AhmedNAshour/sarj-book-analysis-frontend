@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, Book } from "lucide-react";
+import { Loader2, Search, Book, Zap, SearchCheck } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -11,9 +11,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface SearchInputProps {
-  onSearch: (bookId: string) => void;
+  onSearch: (bookId: string, analysisType: 'fast' | 'detailed') => void;
   isLoading: boolean;
 }
 
@@ -30,6 +32,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
   const [bookId, setBookId] = useState<string>('');
   const [open, setOpen] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<typeof SAMPLE_BOOKS>([]);
+  const [analysisType, setAnalysisType] = useState<'fast' | 'detailed'>('fast');
 
   useEffect(() => {
     // Filter suggestions based on input
@@ -47,20 +50,19 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
 
   const handleSearch = () => {
     if (bookId.trim()) {
-      onSearch(bookId.trim());
+      onSearch(bookId.trim(), analysisType);
       setOpen(false);
     }
   };
 
   const handleSelectSuggestion = (id: string) => {
     setBookId(id);
-    onSearch(id);
     setOpen(false);
   };
 
   return (
     <div className="relative w-full">
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4">
         <div className="relative flex-grow">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -105,9 +107,37 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
             </PopoverContent>
           </Popover>
         </div>
+        
+        <div className="border rounded-md p-3 bg-gray-50">
+          <p className="text-sm font-medium mb-2">Analysis Type</p>
+          <RadioGroup value={analysisType} onValueChange={(value: 'fast' | 'detailed') => setAnalysisType(value)} className="flex flex-col gap-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="fast" id="fast" />
+              <Label htmlFor="fast" className="flex items-center cursor-pointer">
+                <Zap className="h-4 w-4 mr-2 text-amber-500" />
+                <div>
+                  <span className="font-medium">Fast Analysis</span>
+                  <p className="text-xs text-gray-500">Quicker results, less detailed (larger chunks)</p>
+                </div>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="detailed" id="detailed" />
+              <Label htmlFor="detailed" className="flex items-center cursor-pointer">
+                <SearchCheck className="h-4 w-4 mr-2 text-blue-500" />
+                <div>
+                  <span className="font-medium">Detailed Analysis</span>
+                  <p className="text-xs text-gray-500">More thorough results, slower (smaller chunks)</p>
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+        
         <Button 
           onClick={handleSearch} 
           disabled={isLoading || !bookId.trim()}
+          className="w-full sm:w-auto self-end"
         >
           {isLoading ? (
             <>
@@ -115,7 +145,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
               Loading...
             </>
           ) : (
-            "Analyze"
+            "Analyze Book"
           )}
         </Button>
       </div>
