@@ -155,6 +155,7 @@ function App() {
               <RelationshipDetail 
                 relationships={bookData.analysis.relationships}
                 characters={bookData.analysis.characters}
+                interactions={bookData.analysis.interactions || []}
               />
             </TabsContent>
           </Tabs>

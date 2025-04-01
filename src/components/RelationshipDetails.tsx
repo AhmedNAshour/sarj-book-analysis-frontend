@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Relationship, Character } from '../types';
+import { Relationship, Character, Interaction } from '../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowRightLeft, ArrowRight } from 'lucide-react';
+import { Search, ArrowRightLeft, ArrowRight, Users } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface RelationshipDetailProps {
   relationships: Relationship[];
   characters: Character[];
+  interactions?: Interaction[];
   selectedCharacter?: string;
 }
 
@@ -19,7 +22,7 @@ interface RelationshipPair {
   targetToSource?: Relationship;
 }
 
-const RelationshipDetail = ({ relationships, characters, selectedCharacter }: RelationshipDetailProps) => {
+const RelationshipDetail = ({ relationships, characters, interactions = [], selectedCharacter }: RelationshipDetailProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grouped' | 'individual'>('grouped');
 
@@ -203,128 +206,222 @@ const RelationshipDetail = ({ relationships, characters, selectedCharacter }: Re
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {viewMode === 'grouped' ? (
-            // Grouped view
-            filteredPairs.length > 0 ? (
-              filteredPairs.map((pair, idx) => (
-                <div key={idx} className="border rounded-md p-4">
-                  <div className="flex flex-col sm:flex-row justify-between mb-4">
-                    <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                      <span className="font-medium">{pair.source}</span>
-                      <ArrowRightLeft className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">{pair.target}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Source to Target Relationship */}
-                  {pair.sourceToTarget && (
-                    <div className="mb-4 border-l-2 pl-3 border-blue-300">
-                      <div className="text-sm font-medium mb-1 flex items-center">
-                        <ArrowRight className="h-4 w-4 mr-1 text-blue-500" />
-                        {pair.source} → {pair.target}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <Badge className={getRelationshipTypeStyle(pair.sourceToTarget.type)}>
-                          {pair.sourceToTarget.type}
-                        </Badge>
-                        <Badge className={getStrengthColor(pair.sourceToTarget.strength)}>
-                          {getStrengthText(pair.sourceToTarget.strength)} ({pair.sourceToTarget.strength})
-                        </Badge>
-                      </div>
-                      
-                      {pair.sourceToTarget.status && (
-                        <div className="mb-2">
-                          <span className="text-sm text-gray-500">Status: </span>
-                          <span className="text-sm font-medium">{pair.sourceToTarget.status}</span>
+        <Tabs defaultValue="relationships">
+          <TabsList className="mb-4">
+            <TabsTrigger value="relationships">Relationships</TabsTrigger>
+            <TabsTrigger value="interactions">Interactions</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="relationships">
+            {viewMode === 'grouped' ? (
+              <div className="space-y-3">
+                {filteredPairs.length > 0 ? (
+                  filteredPairs.map((pair, index) => {
+                    // Get character importance for styling
+                    const sourceImportance = getCharacterImportance(pair.source);
+                    const targetImportance = getCharacterImportance(pair.target);
+                    
+                    // Get maximum strength for better visualization
+                    const maxStrength = Math.max(
+                      pair.sourceToTarget?.strength || 0,
+                      pair.targetToSource?.strength || 0
+                    );
+                    
+                    return (
+                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50">
+                        <div className="flex justify-between mb-2">
+                          <div className="flex gap-2 items-center">
+                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'}>
+                              {pair.source}
+                            </Badge>
+                            <ArrowRightLeft className="h-4 w-4 text-gray-500" />
+                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'}>
+                              {pair.target}
+                            </Badge>
+                          </div>
+                          <Badge variant="outline" className={getStrengthColor(maxStrength)}>
+                            {getStrengthText(maxStrength)}
+                          </Badge>
                         </div>
-                      )}
-                      
-                      <p className="text-sm text-gray-600 mb-2">{pair.sourceToTarget.description}</p>
-                    </div>
-                  )}
-                  
-                  {/* Target to Source Relationship */}
-                  {pair.targetToSource && (
-                    <div className="border-l-2 pl-3 border-purple-300">
-                      <div className="text-sm font-medium mb-1 flex items-center">
-                        <ArrowRight className="h-4 w-4 mr-1 text-purple-500" />
-                        {pair.target} → {pair.source}
+                        
+                        {pair.sourceToTarget && (
+                          <div className="mb-2 border-b pb-2">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500" />
+                                <span className="text-sm font-medium">{pair.source} → {pair.target}</span>
+                              </div>
+                              <Badge variant="outline" className={getRelationshipTypeStyle(pair.sourceToTarget.type)}>
+                                {pair.sourceToTarget.type}
+                              </Badge>
+                            </div>
+                            <p className="text-sm mt-1 text-gray-600">{pair.sourceToTarget.description}</p>
+                            {pair.sourceToTarget.status && (
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {pair.sourceToTarget.status}
+                              </Badge>
+                            )}
+                            {pair.sourceToTarget.numberOfInteractions && (
+                              <div className="mt-2 text-xs flex justify-end">
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                  {pair.sourceToTarget.numberOfInteractions} interactions
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {pair.targetToSource && (
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500" />
+                                <span className="text-sm font-medium">{pair.target} → {pair.source}</span>
+                              </div>
+                              <Badge variant="outline" className={getRelationshipTypeStyle(pair.targetToSource.type)}>
+                                {pair.targetToSource.type}
+                              </Badge>
+                            </div>
+                            <p className="text-sm mt-1 text-gray-600">{pair.targetToSource.description}</p>
+                            {pair.targetToSource.status && (
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {pair.targetToSource.status}
+                              </Badge>
+                            )}
+                            {pair.targetToSource.numberOfInteractions && (
+                              <div className="mt-2 text-xs flex justify-end">
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                  {pair.targetToSource.numberOfInteractions} interactions
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <Badge className={getRelationshipTypeStyle(pair.targetToSource.type)}>
-                          {pair.targetToSource.type}
-                        </Badge>
-                        <Badge className={getStrengthColor(pair.targetToSource.strength)}>
-                          {getStrengthText(pair.targetToSource.strength)} ({pair.targetToSource.strength})
-                        </Badge>
-                      </div>
-                      
-                      {pair.targetToSource.status && (
-                        <div className="mb-2">
-                          <span className="text-sm text-gray-500">Status: </span>
-                          <span className="text-sm font-medium">{pair.targetToSource.status}</span>
-                        </div>
-                      )}
-                      
-                      <p className="text-sm text-gray-600 mb-2">{pair.targetToSource.description}</p>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                {searchTerm 
-                  ? `No relationships found matching '${searchTerm}'`
-                  : selectedCharacter 
-                    ? `No relationships found for ${selectedCharacter}`
-                    : 'No relationships to display'
-                }
-              </div>
-            )
-          ) : (
-            // Individual view (original)
-            filteredRelationships.length > 0 ? (
-              filteredRelationships.map((rel, idx) => (
-                <div key={idx} className="border rounded-md p-4">
-                  <div className="flex flex-col sm:flex-row justify-between mb-2">
-                    <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                      <span className="font-medium">{rel.source}</span>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">{rel.target}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className={getRelationshipTypeStyle(rel.type)}>
-                        {rel.type}
-                      </Badge>
-                      <Badge className={getStrengthColor(rel.strength)}>
-                        {getStrengthText(rel.strength)} ({rel.strength})
-                      </Badge>
-                    </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No relationships found matching your search
                   </div>
-                  
-                  {rel.status && (
-                    <div className="mb-2">
-                      <span className="text-sm text-gray-500">Status: </span>
-                      <span className="text-sm font-medium">{rel.status}</span>
-                    </div>
-                  )}
-                  
-                  <p className="text-sm text-gray-600 mb-3">{rel.description}</p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                {searchTerm 
-                  ? `No relationships found matching '${searchTerm}'`
-                  : selectedCharacter 
-                    ? `No relationships found for ${selectedCharacter}`
-                    : 'No relationships to display'
-                }
+                )}
               </div>
-            )
-          )}
-        </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRelationships.length > 0 ? (
+                  filteredRelationships.map((rel, index) => {
+                    const sourceImportance = getCharacterImportance(rel.source);
+                    const targetImportance = getCharacterImportance(rel.target);
+                    
+                    return (
+                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex gap-1 items-center">
+                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'}>
+                              {rel.source}
+                            </Badge>
+                            <ArrowRight className="h-4 w-4 text-gray-500" />
+                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'}>
+                              {rel.target}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className={getStrengthColor(rel.strength)}>
+                              {getStrengthText(rel.strength)}
+                            </Badge>
+                            {rel.numberOfInteractions && (
+                              <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                {rel.numberOfInteractions} interactions
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Badge variant="outline" className={getRelationshipTypeStyle(rel.type)}>
+                          {rel.type}
+                        </Badge>
+                        
+                        <p className="text-sm mt-2 text-gray-600">{rel.description}</p>
+                        
+                        {rel.status && (
+                          <div className="mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {rel.status}
+                            </Badge>
+                          </div>
+                        )}
+                        
+                        {rel.evidence && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            <strong>Evidence:</strong> {rel.evidence}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No relationships found matching your search
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="interactions">
+            <div className="space-y-3">
+              {interactions.length > 0 ? (
+                <ScrollArea className="h-[400px]">
+                  {interactions
+                    .filter(interaction => 
+                      !selectedCharacter || 
+                      interaction.characters.includes(selectedCharacter)
+                    )
+                    .filter(interaction => 
+                      searchTerm === '' || 
+                      interaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      interaction.characters.some(char => 
+                        char.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                    )
+                    .map((interaction, index) => (
+                      <div key={index} className="border rounded-md p-3 mb-3 hover:bg-gray-50">
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {interaction.characters.map((char, i) => (
+                            <Badge 
+                              key={i} 
+                              variant={getCharacterImportance(char) === 'major' ? 'default' : 'outline'}
+                            >
+                              {char}
+                            </Badge>
+                          ))}
+                        </div>
+                        
+                        <p className="text-sm">{interaction.description}</p>
+                        
+                        <div className="flex justify-between mt-2 text-xs text-gray-500">
+                          {interaction.context && (
+                            <span><strong>Context:</strong> {interaction.context}</span>
+                          )}
+                          {interaction.type && (
+                            <Badge variant="outline">
+                              {interaction.type}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  }
+                </ScrollArea>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <Users className="h-12 w-12 mb-4 text-gray-300" />
+                  <p>No character interactions available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

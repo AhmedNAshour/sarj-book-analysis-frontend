@@ -69,7 +69,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
             value: rel.strength || 1,
             type: rel.type || '',
             description: rel.description || '',
-            status: rel.status
+            status: rel.status,
+            numberOfInteractions: rel.numberOfInteractions
           });
         }
       } else {
@@ -80,7 +81,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
           value: rel.strength || 1,
           type: rel.type || '',
           description: rel.description || '',
-          status: rel.status
+          status: rel.status,
+          numberOfInteractions: rel.numberOfInteractions
         });
       }
     });
@@ -180,7 +182,13 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       .data(graphData.links)
       .enter()
       .append('line')
-      .attr('stroke-width', d => Math.max(Math.sqrt(d.value), 1))
+      .attr('stroke-width', d => {
+        // Use numberOfInteractions if available, otherwise fall back to value
+        if (d.numberOfInteractions) {
+          return Math.max(Math.sqrt(d.numberOfInteractions), 1) * 1.5;
+        }
+        return Math.max(Math.sqrt(d.value), 1);
+      })
       .attr('stroke', '#94a3b8')
       .attr('stroke-opacity', 0.6);
     
@@ -404,10 +412,49 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Helper for relationship type styling
+  const getRelationshipTypeStyle = (type: string): string => {
+    const types: Record<string, string> = {
+      'friend': 'bg-green-100 text-green-800 border-green-200',
+      'romantic': 'bg-pink-100 text-pink-800 border-pink-200',
+      'family': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'adversarial': 'bg-red-100 text-red-800 border-red-200',
+      'professional': 'bg-blue-100 text-blue-800 border-blue-200',
+      'mentor': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    };
+
+    // Check if the type contains any of our known keywords
+    for (const [keyword, style] of Object.entries(types)) {
+      if (type.toLowerCase().includes(keyword.toLowerCase())) {
+        return style;
+      }
+    }
+
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  // Helper for relationship strength text
+  const getStrengthText = (strength: number): string => {
+    if (strength >= 10) return 'Very Strong';
+    if (strength >= 7) return 'Strong';
+    if (strength >= 4) return 'Moderate';
+    if (strength >= 2) return 'Weak';
+    return 'Very Weak';
+  };
+
+  // Helper for strength color
+  const getStrengthColor = (strength: number): string => {
+    if (strength >= 10) return 'bg-purple-700 text-white';
+    if (strength >= 7) return 'bg-purple-500 text-white';
+    if (strength >= 4) return 'bg-purple-300 text-purple-900';
+    if (strength >= 2) return 'bg-purple-200 text-purple-900';
+    return 'bg-purple-100 text-purple-900';
+  };
+
   return (
     <div className="w-full h-full flex flex-col" style={{ minHeight: '80vh' }}>
       <div className="flex flex-col lg:flex-row gap-4 h-full flex-grow">
-        <div className="lg:w-3/4 h-full min-h-[600px] flex-grow">
+        <div className="lg:w-[70%] h-full min-h-[600px] flex-grow">
           {/* Search bar moved to top of container instead of overlaying the graph */}
           <div className="mb-2 flex justify-between items-center">
             <div className="relative w-48">
@@ -430,112 +477,111 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
             <svg ref={svgRef} width="100%" height="100%" className="p-2" />
           </div>
         </div>
-        <div className="lg:w-1/4 h-full overflow-auto">
+        <div className="lg:w-[30%] h-[600px] flex-shrink-0">
           {selectedNode ? (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div>
-                  <h3 className="text-xl font-bold">{selectedNode.name}</h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="outline" className="capitalize">{selectedNode.importance}</Badge>
-                    <Badge variant="secondary">{selectedNode.value} Mentions</Badge>
-                  </div>
-                  
-                  {selectedNode.aliases && selectedNode.aliases.length > 0 && (
-                    <div className="mt-2">
-                      <h4 className="text-sm font-semibold text-gray-500">Also known as:</h4>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {selectedNode.aliases.map(alias => (
-                          <Badge key={alias} variant="outline" className="text-gray-500">{alias}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            <Card className="h-full overflow-hidden flex flex-col">
+              <CardContent className="p-4 flex-grow overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium truncate mr-2">{selectedNode.name}</h3>
+                  <Badge variant="outline" className="capitalize shrink-0">{selectedNode.importance}</Badge>
                 </div>
                 
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-500">Character Description:</h4>
-                  <p className="text-sm mt-1">{selectedNode.description}</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-500">How {selectedNode.name} views others:</h4>
-                  <ScrollArea className="h-[150px] border rounded-md">
-                    <div className="p-2">
-                      {relationships
-                        .filter(rel => rel.source === selectedNode.id)
-                        .sort((a, b) => b.strength - a.strength)
-                        .map((rel, idx) => {
-                          const simplifiedType = rel.type.split('-').length === 2 ? 
-                            rel.type.split('-')[0] : rel.type;
+                <ScrollArea className="h-[calc(600px-8rem)] w-full">
+                  {(() => {
+                    const character = characters.find(c => c.name === selectedNode.id);
+                    const { outgoing, incoming } = getCharacterRelationships(selectedNode.id);
+                    
+                    return (
+                      <>
+                        {character?.aliases && character.aliases.length > 0 && (
+                          <div className="mb-3">
+                            <span className="text-sm text-gray-500">Also known as: </span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {character.aliases.map((alias: string, i: number) => (
+                                <Badge variant="outline" key={i}>{alias}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-600 mb-4">{selectedNode.description}</p>
+                        
+                        <Separator className="my-3" />
+                        
+                        <div className="mt-2 pr-1">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Relationships ({outgoing.length + incoming.length})</h4>
                           
-                          return (
-                            <div key={`outgoing-${idx}`} className="flex flex-col py-2 border-b last:border-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">{rel.target}</span>
-                                {rel.status && (
-                                  <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
-                                )}
-                              </div>
-                              <div className="mt-1">
-                                <Badge 
-                                  variant="outline"
-                                  className="text-xs whitespace-normal break-words"
-                                  style={{
-                                    backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
-                                  }}
-                                >
-                                  {simplifiedType}
-                                </Badge>
+                          {outgoing.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="text-xs font-medium text-gray-600 mb-1">Outgoing</h5>
+                              <div className="space-y-2">
+                                {outgoing.map((rel: Relationship, i: number) => (
+                                  <div key={i} className="text-xs p-2 bg-gray-50 rounded-md">
+                                    <div className="flex justify-between items-start">
+                                      <span className="font-medium">{rel.target}</span>
+                                    </div>
+                                    <div className="mt-1 mb-1">
+                                      <Badge variant="outline" className={`${getRelationshipTypeStyle(rel.type)} text-xs max-w-full break-words inline-flex px-2 py-1`}>
+                                        <span className="break-words whitespace-normal">{rel.type}</span>
+                                      </Badge>
+                                    </div>
+                                    <p className="mt-1 text-gray-600 break-words text-xs line-clamp-2 hover:line-clamp-none">{rel.description}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      <Badge variant="outline" className={getStrengthColor(rel.strength)}>
+                                        {getStrengthText(rel.strength)}
+                                      </Badge>
+                                      {rel.numberOfInteractions && (
+                                        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                          {rel.numberOfInteractions} interactions
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                          );
-                        })}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-500">How others view {selectedNode.name}:</h4>
-                  <ScrollArea className="h-[150px] border rounded-md">
-                    <div className="p-2">
-                      {relationships
-                        .filter(rel => rel.target === selectedNode.id)
-                        .sort((a, b) => b.strength - a.strength)
-                        .map((rel, idx) => {
-                          const simplifiedType = rel.type.split('-').length === 2 ? 
-                            rel.type.split('-')[0] : rel.type;
+                          )}
                           
-                          return (
-                            <div key={`incoming-${idx}`} className="flex flex-col py-2 border-b last:border-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">{rel.source}</span>
-                                {rel.status && (
-                                  <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
-                                )}
-                              </div>
-                              <div className="mt-1">
-                                <Badge 
-                                  variant="outline"
-                                  className="text-xs whitespace-normal break-words"
-                                  style={{
-                                    backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
-                                  }}
-                                >
-                                  {simplifiedType}
-                                </Badge>
+                          {incoming.length > 0 && (
+                            <div>
+                              <h5 className="text-xs font-medium text-gray-600 mb-1">Incoming</h5>
+                              <div className="space-y-2">
+                                {incoming.map((rel: Relationship, i: number) => (
+                                  <div key={i} className="text-xs p-2 bg-gray-50 rounded-md">
+                                    <div className="flex justify-between items-start">
+                                      <span className="font-medium">{rel.source}</span>
+                                    </div>
+                                    <div className="mt-1 mb-1">
+                                      <Badge variant="outline" className={`${getRelationshipTypeStyle(rel.type)} text-xs max-w-full break-words inline-flex px-2 py-1`}>
+                                        <span className="break-words whitespace-normal">{rel.type}</span>
+                                      </Badge>
+                                    </div>
+                                    <p className="mt-1 text-gray-600 break-words text-xs line-clamp-2 hover:line-clamp-none">{rel.description}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      <Badge variant="outline" className={getStrengthColor(rel.strength)}>
+                                        {getStrengthText(rel.strength)}
+                                      </Badge>
+                                      {rel.numberOfInteractions && (
+                                        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                          {rel.numberOfInteractions} interactions
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                          );
-                        })}
-                    </div>
-                  </ScrollArea>
-                </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </ScrollArea>
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="h-full">
+              <CardContent className="p-4">
                 <p className="text-gray-500">Click on a character to view their details</p>
                 <div className="mt-4">
                   <h4 className="text-sm font-semibold mb-2">Legend:</h4>

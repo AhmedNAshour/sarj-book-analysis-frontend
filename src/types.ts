@@ -15,6 +15,15 @@ export interface Relationship {
   description: string;
   strength: number;
   status?: string;
+  evidence?: string;
+  numberOfInteractions?: number;
+}
+
+export interface Interaction {
+  characters: string[];
+  description: string;
+  context?: string;
+  type?: string;
 }
 
 export interface BookAnalysisMeta {
@@ -34,6 +43,7 @@ export interface BookAnalysis {
   analysis: {
     characters: Character[];
     relationships: Relationship[];
+    interactions?: Interaction[];
     meta: BookAnalysisMeta;
   }
 }
@@ -59,4 +69,5 @@ export interface Link {
   type: string;
   description: string;
   status?: string;
+  numberOfInteractions?: number;
 }
