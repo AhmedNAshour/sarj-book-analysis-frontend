@@ -27,8 +27,8 @@ function App() {
     setError(null);
 
     try {
-      // Use localhost:3000 for development
-      const apiBaseUrl = import.meta.env.DEV ? 'http://localhost:3000' : import.meta.env.VITE_API_BASE_URL;
+      // Use localhost:3000 for development, and the Render backend URL for production
+      const apiBaseUrl = import.meta.env.DEV ? 'http://localhost:3000' : 'https://sarj-book-analysis-backend.onrender.com';
       const response = await fetch(`${apiBaseUrl}/api/analysis/${bookId}/full`, {
         method: 'POST',
         headers: {
