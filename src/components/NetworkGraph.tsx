@@ -36,7 +36,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       value: char.mentions || 1,
       importance: char.importance,
       description: char.description || '',
-      aliases: Array.isArray(char.aliases) ? char.aliases : []
+      aliases: Array.isArray(char.aliases) ? char.aliases : [],
+      arcSpan: char.arcSpan,
+      appearanceCount: char.appearanceCount,
+      presencePattern: char.presencePattern
     }));
 
     // Create links from relationships
@@ -45,7 +48,11 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       target: rel.target,
       value: rel.strength || 1,
       type: rel.type || '',
-      description: rel.description || ''
+      description: rel.description || '',
+      status: rel.status,
+      arcSpan: rel.arcSpan,
+      appearanceCount: rel.appearanceCount,
+      developmentPattern: rel.developmentPattern
     }));
 
     return { nodes, links };
@@ -401,26 +408,61 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                   <p className="text-sm mt-1">{selectedNode.description}</p>
                 </div>
                 
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedNode.arcSpan !== undefined && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{selectedNode.arcSpan}</div>
+                      <div className="text-xs text-gray-500">Arc Span</div>
+                    </div>
+                  )}
+                  
+                  {selectedNode.appearanceCount !== undefined && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{selectedNode.appearanceCount}</div>
+                      <div className="text-xs text-gray-500">Appearances</div>
+                    </div>
+                  )}
+                  
+                  {selectedNode.presencePattern && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium text-xs capitalize">{selectedNode.presencePattern}</div>
+                      <div className="text-xs text-gray-500">Presence</div>
+                    </div>
+                  )}
+                </div>
+                
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500">Connections:</h4>
-                  <div className="mt-1 max-h-40 overflow-y-auto">
+                  <div className="mt-1 max-h-[200px] overflow-y-auto space-y-1">
                     {relationships
-                      .filter(rel => rel.source === selectedNode.id || rel.target === selectedNode.id)
+                      .filter(rel => rel.source === selectedNode.id)
                       .sort((a, b) => b.strength - a.strength)
                       .map((rel, idx) => {
-                        const otherCharacter = rel.source === selectedNode.id ? rel.target : rel.source;
+                        // Simplify symmetric relationships and show target's role
+                        const simplifiedType = rel.type.split('-').length === 2 && 
+                          rel.type.split('-')[0] === rel.type.split('-')[1] 
+                          ? rel.type.split('-')[0] 
+                          : rel.type.split('-')[1];
+                        
                         return (
-                          <div key={idx} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
-                            <span className="text-sm">{otherCharacter}</span>
-                            <Badge 
-                              variant="outline"
-                              className="text-xs"
-                              style={{
-                                backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
-                              }}
-                            >
-                              {rel.type}
-                            </Badge>
+                          <div key={idx} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{rel.target}</span>
+                              {rel.status && (
+                                <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
+                              )}
+                            </div>
+                            <div className="mt-1">
+                              <Badge 
+                                variant="outline"
+                                className="text-xs whitespace-normal break-words"
+                                style={{
+                                  backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
+                                }}
+                              >
+                                {simplifiedType}
+                              </Badge>
+                            </div>
                           </div>
                         );
                       })}

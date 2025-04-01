@@ -29,55 +29,34 @@ function App() {
       // For development: check if we should load test data
       if (bookId === '1787') {
         // This is Hamlet ID from the example data, use hardcoded data
-        const testData = {
+        const testData: BookAnalysis = {
           "bookId": "1787",
           "title": "Hamlet",
           "author": "William Shakespeare",
           "analysis": {
             "characters": [
-              {"name": "Hamlet", "aliases": ["Prince Hamlet"], "description": "The Prince of Denmark, son of the former king and nephew of Claudius. Continues to struggle with his emotions and morality, seeking to avenge his father's death while navigating the complexities of his own sanity and the deceit surrounding him.", "importance": "major", "mentions": 162},
-              {"name": "King Claudius", "aliases": ["The King", "Claudius"], "description": "The King of Denmark, brother of the former king and uncle of Hamlet. Struggles with his own guilt and the consequences of his actions, deciding to send Hamlet to England to prevent further danger to himself.", "importance": "major", "mentions": 55},
-              {"name": "Polonius", "aliases": ["Lord Chamberlain"], "description": "The Lord Chamberlain of Denmark, father of Laertes and Ophelia. Meets his demise at the hands of Hamlet, who mistakes him for the King while he is hiding behind the arras in the Queen's closet.", "importance": "major", "mentions": 45},
-              {"name": "Gertrude", "aliases": ["The Queen"], "description": "The Queen of Denmark, mother of Hamlet and wife of Claudius. Torn between her love for her son and her loyalty to her husband, ultimately deciding to follow Hamlet's advice and refrain from sleeping with Claudius.", "importance": "major", "mentions": 40},
-              {"name": "Horatio", "aliases": [], "description": "A friend of Hamlet's, who has come to Elsinore for the funeral. Remains a loyal and trusted friend to Hamlet, providing a voice of reason and serving as a confidant in his times of need.", "importance": "major", "mentions": 35},
-              {"name": "Ophelia", "aliases": [], "description": "The daughter of Polonius, who is loved by Hamlet. Becomes increasingly distraught and heartbroken as a result of Hamlet's rejection and the chaos surrounding her family.", "importance": "major", "mentions": 33},
-              {"name": "Laertes", "aliases": [], "description": "The son of Polonius, who has come to Denmark for the coronation. Seeks to avenge his father's death and is manipulated by King Claudius to do so.", "importance": "major", "mentions": 28},
-              {"name": "Rosencrantz", "aliases": [], "description": "A courtier who is a friend of Hamlet's. Continues to serve as a messenger and advisor to the King, while also attempting to understand and navigate Hamlet's behavior.", "importance": "supporting", "mentions": 18},
-              {"name": "Guildenstern", "aliases": [], "description": "A courtier who is a friend of Hamlet's. Works alongside Rosencrantz to carry out the King's orders and provide counsel, while also observing Hamlet's actions and reporting back to the King.", "importance": "supporting", "mentions": 16},
-              {"name": "Ghost of Hamlet's Father", "aliases": ["The Ghost"], "description": "The spirit of the former king, who appears to Hamlet and others. Appears to Hamlet once more, serving as a reminder of his duty to avenge his father's death and prompting him to take action.", "importance": "major", "mentions": 15},
-              {"name": "Osric", "aliases": [], "description": "A courtier who serves as a messenger and informant for King Claudius.", "importance": "minor", "mentions": 11},
-              {"name": "Fortinbras", "aliases": [], "description": "Returns from Poland and takes control of Denmark after the deaths of the royal family.", "importance": "major", "mentions": 7},
-              {"name": "Marcellus", "aliases": [], "description": "An officer who is on guard with Bernardo.", "importance": "minor", "mentions": 6},
-              {"name": "Bernardo", "aliases": [], "description": "An officer who is on guard with Marcellus.", "importance": "minor", "mentions": 5},
-              {"name": "Voltemand", "aliases": [], "description": "A courtier who is sent to Norway.", "importance": "minor", "mentions": 2},
-              {"name": "Cornelius", "aliases": [], "description": "A courtier who is sent to Norway.", "importance": "minor", "mentions": 2},
-              {"name": "Reynaldo", "aliases": [], "description": "A servant of Polonius.", "importance": "minor", "mentions": 2},
-              {"name": "Lucianus", "aliases": [], "description": "A player who performs a scene in the play-within-a-play, which mirrors the events of the King's murder and serves to provoke a reaction from him.", "importance": "minor", "mentions": 2},
-              {"name": "First Player", "aliases": [], "description": "Performs a speech about the death of Priam, which moves Hamlet to consider the nature of his own emotions and the morality of his actions.", "importance": "minor", "mentions": 2}
+              {"name": "Prince Hamlet", "aliases": ["Lord Hamlet", "The Prince of Denmark", "Son of Denmark"], "description": "The melancholic prince of Denmark and protagonist. After his father's death and his mother's hasty remarriage to his uncle Claudius, Hamlet is visited by his father's ghost, who reveals he was murdered by Claudius. Torn between duty, moral questions, and psychological turmoil, Hamlet feigns madness while contemplating revenge. His philosophical nature leads to inaction and delay as he questions existence itself ('To be or not to be'). Throughout the play, his relationships deteriorate as his behavior becomes increasingly erratic, culminating in a tragic chain of deaths including his own.", "importance": "major", "mentions": 834, "arcSpan": 5, "appearanceCount": 5, "presencePattern": "continuous"},
+              {"name": "King Claudius", "aliases": ["The King", "The King of Denmark", "Hamlet's Uncle"], "description": "The current king of Denmark who murdered his brother (Old Hamlet) and hastily married his widow Gertrude. Ambitious and calculating, Claudius presents a public face of strength and normalcy while secretly dealing with guilt over his fratricide. As Hamlet's behavior grows more threatening, Claudius plots increasingly desperate measures to eliminate his nephew, ultimately arranging what he intends to be Hamlet's death in England. His guilt is confirmed when he cannot pray for forgiveness, revealing his understanding of the magnitude of his crime.", "importance": "major", "mentions": 573, "arcSpan": 5, "appearanceCount": 5, "presencePattern": "continuous"},
+              {"name": "Queen Gertrude", "aliases": ["The Queen", "Queen of Denmark", "Hamlet's Mother"], "description": "The Queen of Denmark, mother to Hamlet and now wife to Claudius. Her hasty marriage following her husband's death deeply troubles Hamlet. Her character is morally ambiguous - it's unclear whether she was complicit in her husband's murder or simply a weak-willed woman who chose security and status. Her love for her son is evident, though her loyalty remains divided between Hamlet and Claudius until the final scene where she unwittingly drinks the poison intended for Hamlet.", "importance": "major", "mentions": 340, "arcSpan": 4, "appearanceCount": 4, "presencePattern": "continuous"},
+              {"name": "Polonius", "aliases": ["Lord Chamberlain"], "description": "The King's chief counselor, father to Laertes and Ophelia. A long-winded, meddling politician who constantly spies on others while offering tedious advice packaged as wisdom. His suspicious nature leads him to hide behind a tapestry to eavesdrop on Hamlet's conversation with Gertrude, resulting in his death when Hamlet stabs him through the curtain. His death triggers a series of tragic events affecting his children.", "importance": "major", "mentions": 238, "arcSpan": 3, "appearanceCount": 3, "presencePattern": "early"},
+              {"name": "Horatio", "aliases": ["Hamlet's Friend"], "description": "Hamlet's loyal friend from university who serves as his confidant throughout the play. Unlike other characters, Horatio is honest, rational, and steadfast. He witnesses the ghost's first appearance and becomes Hamlet's trusted ally. Horatio's levelheadedness provides a stark contrast to Hamlet's emotional turbulence. In the end, he is the only main character to survive, tasked with telling Hamlet's story to the world.", "importance": "major", "mentions": 212, "arcSpan": 5, "appearanceCount": 5, "presencePattern": "continuous"}
             ],
             "relationships": [
-              {"source": "King Claudius", "target": "Hamlet", "type": "uncle-nephew", "strength": 17, "description": "Claudius is Hamlet's uncle and the current king, while Hamlet is his nephew and the prince of Denmark. Hamlet continues to seek revenge against the King, who is increasingly wary of Hamlet's actions and intentions. Hamlet's desire for revenge against his uncle drives the plot of the play."},
-              {"source": "Hamlet", "target": "Horatio", "type": "friendship", "strength": 14, "description": "Hamlet and Horatio are close friends, and Horatio is one of the few people Hamlet trusts. Horatio remains a loyal and trusted friend to Hamlet, providing a voice of reason and serving as a confidant in his times of need. Horatio provides a voice of reason and support for Hamlet throughout the play."},
-              {"source": "Hamlet", "target": "Ophelia", "type": "romantic interest", "strength": 9, "description": "Hamlet is in love with Ophelia, but their relationship is complicated by the circumstances of the play. Hamlet's rejection of Ophelia continues to cause her distress and heartache, ultimately contributing to her downfall. Hamlet's rejection of Ophelia contributes to her downfall and ultimately her death."},
-              {"source": "Laertes", "target": "Hamlet", "type": "adversarial", "strength": 9, "description": "Laertes seeks to avenge his father's death and ultimately engages in a fatal duel with Hamlet."},
-              {"source": "King Claudius", "target": "Laertes", "type": "manipulative", "strength": 8, "description": "King Claudius manipulates Laertes into seeking revenge against Hamlet."},
-              {"source": "Gertrude", "target": "Hamlet", "type": "mother-son", "strength": 4, "description": "Gertrude is Hamlet's mother, but their relationship is strained due to her quick remarriage to Claudius. Hamlet confronts his mother about her actions and morals, leading to a deeper understanding and a sense of resolution between them."},
-              {"source": "Ghost of Hamlet's Father", "target": "Hamlet", "type": "father-son", "strength": 4, "description": "The ghost of Hamlet's father appears to him and demands that he avenges his death."},
-              {"source": "Polonius", "target": "Laertes", "type": "father-son", "strength": 3, "description": "Polonius is Laertes' father and gives him advice on how to behave."},
-              {"source": "Polonius", "target": "Ophelia", "type": "father-daughter", "strength": 3, "description": "Polonius is Ophelia's father and tries to control her interactions with Hamlet."},
-              {"source": "Rosencrantz", "target": "Guildenstern", "type": "collaborative friendship", "strength": 2, "description": "Rosencrantz and Guildenstern work together to carry out the King's orders and provide counsel, demonstrating their close friendship and cooperation."},
-              {"source": "Hamlet", "target": "Polonius", "type": "fatal confrontation", "strength": 1, "description": "Hamlet mistakenly kills Polonius while he is hiding behind the arras in the Queen's closet."},
-              {"source": "King Claudius", "target": "Gertrude", "type": "marital tension", "strength": 1, "description": "The King and Queen's relationship is strained due to the King's guilt and the Queen's growing unease with her situation."}
+              {"source": "Prince Hamlet", "target": "King Claudius", "type": "nephew-uncle + subject-king", "status": "vengeful, antagonistic, distrustful", "description": "This complex relationship forms the central conflict of the play. As Hamlet discovers Claudius murdered his father, their uncle-nephew bond transforms into one of secret enemies. While maintaining a facade of royal subject and monarch in public, Hamlet contemplates killing Claudius while Claudius increasingly fears Hamlet's erratic behavior. Their relationship evolves from uncomfortable wariness to active plotting against each other. Hamlet's delay in taking revenge allows Claudius time to arrange his murder, culminating in the tragedy that destroys the royal family. Their relationship embodies themes of revenge, justice, duty and the corruption of royal power.", "strength": 10, "arcSpan": 5, "appearanceCount": 5, "developmentPattern": "continuous"},
+              {"source": "Prince Hamlet", "target": "Queen Gertrude", "type": "mother-son", "status": "complex, disappointed, conflicted", "description": "Hamlet's relationship with his mother is deeply conflicted after her hasty remarriage to Claudius. He views her choice as a betrayal of his father's memory and questions her morality and judgment. His famous line 'Frailty, thy name is woman' reflects his disappointment in her choices. During their confrontation in her chambers, Hamlet expresses his disgust openly but also shows concern for her soul, urging her to abandon Claudius' bed. Whether Gertrude knows about Claudius' crime remains ambiguous, but Hamlet's harsh words appear to affect her conscience. Despite their strained relationship, Gertrude retains maternal affection for Hamlet, showing concern for his mental state and drinking the poisoned cup perhaps in a final act of maternal protection.", "strength": 8, "arcSpan": 4, "appearanceCount": 4, "developmentPattern": "continuous"},
+              {"source": "Prince Hamlet", "target": "Horatio", "type": "friendship", "status": "loyal, trusting", "description": "One of the few positive relationships in the play. Horatio is Hamlet's devoted friend from Wittenberg University who comes to Elsinore for King Hamlet's funeral. He serves as Hamlet's confidant, trusted ally, and the voice of reason amidst chaos. Unlike others, Horatio never betrays Hamlet and remains steadfastly loyal. Hamlet trusts him completely, sharing his thoughts, fears, and plans for revenge. In the final scene, Hamlet's dying wish is for Horatio to live and tell his story, showing his trust in Horatio's integrity and devotion.", "strength": 7, "arcSpan": 5, "appearanceCount": 5, "developmentPattern": "steady"},
+              {"source": "Prince Hamlet", "target": "Polonius", "type": "subject-counselor", "status": "contemptuous, suspicious", "description": "Hamlet has little respect for Polonius, whom he sees as a foolish, meddling old man. He openly mocks him, calling him a 'fishmonger' and speaking to him with thinly veiled contempt. Polonius believes Hamlet's apparent madness stems from his love for Ophelia, completely misdiagnosing the prince's true condition. Their antagonistic relationship culminates when Hamlet mistakenly kills Polonius, who is spying on him from behind a tapestry in Gertrude's chamber. This pivotal action accelerates the play's tragic conclusion, turning Laertes and Ophelia decisively against Hamlet.", "strength": 5, "arcSpan": 3, "appearanceCount": 3, "developmentPattern": "escalating"}
             ],
             "meta": {
-              "consistencyKey": 1743361897771,
-              "chunksProcessed": 3,
-              "characterCount": 19,
-              "relationshipCount": 12
+              "consistencyKey": 1712014982736,
+              "chunksProcessed": 5,
+              "characterCount": 18,
+              "relationshipCount": 42,
+              "analysisDate": "2025-03-31T15:36:22.736Z"
             }
           }
         };
-        setBookData(testData as BookAnalysis);
+        setBookData(testData);
         setLoading(false);
         return;
       }
@@ -169,6 +148,15 @@ function App() {
                     <div className="text-xs text-gray-500">Avg. Relationship Strength</div>
                   </div>
                 </div>
+                {bookData.analysis.meta.analysisDate && (
+                  <div className="bg-amber-50 p-3 rounded-md flex items-center gap-2">
+                    <Book className="h-5 w-5 text-amber-500" />
+                    <div>
+                      <div className="text-sm font-medium">{new Date(bookData.analysis.meta.analysisDate).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-500">Analysis Date</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

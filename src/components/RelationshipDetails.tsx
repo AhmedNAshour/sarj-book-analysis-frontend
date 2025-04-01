@@ -25,6 +25,7 @@ const RelationshipDetail = ({ relationships, characters, selectedCharacter }: Re
       rel.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
       rel.target.toLowerCase().includes(searchTerm.toLowerCase()) ||
       rel.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (rel.status?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
       rel.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
@@ -117,7 +118,35 @@ const RelationshipDetail = ({ relationships, characters, selectedCharacter }: Re
                     </Badge>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">{rel.description}</p>
+                
+                {rel.status && (
+                  <div className="mb-2">
+                    <span className="text-sm text-gray-500">Status: </span>
+                    <span className="text-sm font-medium">{rel.status}</span>
+                  </div>
+                )}
+                
+                <p className="text-sm text-gray-600 mb-3">{rel.description}</p>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {rel.arcSpan && (
+                    <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
+                      Arc Span: <span className="font-medium">{rel.arcSpan}</span>
+                    </div>
+                  )}
+                  
+                  {rel.appearanceCount && (
+                    <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
+                      Appearances: <span className="font-medium">{rel.appearanceCount}</span>
+                    </div>
+                  )}
+                  
+                  {rel.developmentPattern && (
+                    <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
+                      Development: <span className="font-medium">{rel.developmentPattern}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           ) : (

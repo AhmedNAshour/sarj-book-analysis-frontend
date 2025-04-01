@@ -33,7 +33,7 @@ interface CharacterListProps {
 
 const CharacterList = ({ characters }: CharacterListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'mentions' | 'alphabetical'>('mentions');
+  const [sortBy, setSortBy] = useState<'mentions' | 'alphabetical' | 'arcSpan' | 'appearanceCount'>('mentions');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
   const filteredCharacters = characters.filter(char => 
@@ -45,6 +45,10 @@ const CharacterList = ({ characters }: CharacterListProps) => {
   const sortedCharacters = [...filteredCharacters].sort((a, b) => {
     if (sortBy === 'mentions') {
       return b.mentions - a.mentions;
+    } else if (sortBy === 'arcSpan') {
+      return (b.arcSpan || 0) - (a.arcSpan || 0);
+    } else if (sortBy === 'appearanceCount') {
+      return (b.appearanceCount || 0) - (a.appearanceCount || 0);
     } else {
       return a.name.localeCompare(b.name);
     }
@@ -86,7 +90,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
         <div className="w-full sm:w-48">
           <Select
             value={sortBy}
-            onValueChange={(value) => setSortBy(value as 'mentions' | 'alphabetical')}
+            onValueChange={(value) => setSortBy(value as 'mentions' | 'alphabetical' | 'arcSpan' | 'appearanceCount')}
           >
             <SelectTrigger>
               <SelectValue placeholder="Sort by" />
@@ -94,6 +98,8 @@ const CharacterList = ({ characters }: CharacterListProps) => {
             <SelectContent>
               <SelectItem value="mentions">Sort by Mentions</SelectItem>
               <SelectItem value="alphabetical">Sort Alphabetically</SelectItem>
+              <SelectItem value="arcSpan">Sort by Arc Span</SelectItem>
+              <SelectItem value="appearanceCount">Sort by Appearances</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -108,6 +114,8 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                   <TableHead className="w-[250px]">Character</TableHead>
                   <TableHead>Importance</TableHead>
                   <TableHead className="text-right">Mentions</TableHead>
+                  <TableHead className="text-center">Appearances</TableHead>
+                  <TableHead className="text-center">Arc Span</TableHead>
                   <TableHead className="w-[100px] text-center">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -127,6 +135,8 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{character.mentions}</TableCell>
+                    <TableCell className="text-center">{character.appearanceCount || 'N/A'}</TableCell>
+                    <TableCell className="text-center">{character.arcSpan || 'N/A'}</TableCell>
                     <TableCell className="text-center">
                       <button 
                         type="button"
@@ -144,7 +154,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                 ))}
                 {sortedCharacters.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
+                    <TableCell colSpan={6} className="text-center py-6">
                       No characters found matching '{searchTerm}'
                     </TableCell>
                   </TableRow>
@@ -187,6 +197,29 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500 mb-2">Description:</h4>
                   <p className="text-sm">{selectedCharacter.description}</p>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {selectedCharacter.appearanceCount && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{selectedCharacter.appearanceCount}</div>
+                      <div className="text-xs text-gray-500">Appearances</div>
+                    </div>
+                  )}
+                  
+                  {selectedCharacter.arcSpan && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{selectedCharacter.arcSpan}</div>
+                      <div className="text-xs text-gray-500">Arc Span</div>
+                    </div>
+                  )}
+                  
+                  {selectedCharacter.presencePattern && (
+                    <div className="text-center p-2 bg-gray-50 rounded">
+                      <div className="font-medium text-xs capitalize">{selectedCharacter.presencePattern}</div>
+                      <div className="text-xs text-gray-500">Presence</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
