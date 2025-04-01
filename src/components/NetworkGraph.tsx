@@ -27,7 +27,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
   
-  // Transform data for D3
+  // Transform data for D3 and deduplicate relationships for graph display
   const graphData = useMemo<GraphData>(() => {
     // Create nodes from characters
     const nodes: Node[] = characters.map(char => ({
@@ -42,21 +42,58 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       presencePattern: char.presencePattern
     }));
 
-    // Create links from relationships
-    const links: Link[] = relationships.map(rel => ({
-      source: rel.source,
-      target: rel.target,
-      value: rel.strength || 1,
-      type: rel.type || '',
-      description: rel.description || '',
-      status: rel.status,
-      arcSpan: rel.arcSpan,
-      appearanceCount: rel.appearanceCount,
-      developmentPattern: rel.developmentPattern
-    }));
+    // Create a map to deduplicate relationships
+    const connectionMap = new Map<string, Link>();
+    
+    // Process all relationships, but only keep one connection per character pair
+    relationships.forEach(rel => {
+      // Create a consistent key for the pair, sorting names to ensure uniqueness
+      const pairKey = [rel.source, rel.target].sort().join('->');
+      
+      // If we already have a relationship for this pair, keep the stronger one
+      if (connectionMap.has(pairKey)) {
+        const existingRel = connectionMap.get(pairKey)!;
+        if (rel.strength > existingRel.value) {
+          connectionMap.set(pairKey, {
+            source: rel.source,
+            target: rel.target,
+            value: rel.strength || 1,
+            type: rel.type || '',
+            description: rel.description || '',
+            status: rel.status,
+            arcSpan: rel.arcSpan,
+            appearanceCount: rel.appearanceCount,
+            developmentPattern: rel.developmentPattern
+          });
+        }
+      } else {
+        // Add the new relationship
+        connectionMap.set(pairKey, {
+          source: rel.source,
+          target: rel.target,
+          value: rel.strength || 1,
+          type: rel.type || '',
+          description: rel.description || '',
+          status: rel.status,
+          arcSpan: rel.arcSpan,
+          appearanceCount: rel.appearanceCount,
+          developmentPattern: rel.developmentPattern
+        });
+      }
+    });
+    
+    // Convert the map to an array
+    const links: Link[] = Array.from(connectionMap.values());
 
     return { nodes, links };
   }, [characters, relationships]);
+
+  // Get outgoing and incoming relationships for a character
+  const getCharacterRelationships = (characterId: string) => {
+    const outgoing = relationships.filter(rel => rel.source === characterId);
+    const incoming = relationships.filter(rel => rel.target === characterId && rel.source !== characterId);
+    return { outgoing, incoming };
+  };
 
   // Reference to keep track of active simulation
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
@@ -431,21 +468,19 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                   )}
                 </div>
                 
+                {/* Updated Connections section to show both directions */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500">Connections:</h4>
-                  <div className="mt-1 max-h-[200px] overflow-y-auto space-y-1">
+                  <h4 className="text-sm font-semibold text-gray-500">How {selectedNode.name} views others:</h4>
+                  <div className="mt-1 max-h-[150px] overflow-y-auto space-y-1">
                     {relationships
                       .filter(rel => rel.source === selectedNode.id)
                       .sort((a, b) => b.strength - a.strength)
                       .map((rel, idx) => {
-                        // Simplify symmetric relationships and show target's role
-                        const simplifiedType = rel.type.split('-').length === 2 && 
-                          rel.type.split('-')[0] === rel.type.split('-')[1] 
-                          ? rel.type.split('-')[0] 
-                          : rel.type.split('-')[1];
+                        const simplifiedType = rel.type.split('-').length === 2 ? 
+                          rel.type.split('-')[0] : rel.type;
                         
                         return (
-                          <div key={idx} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
+                          <div key={`outgoing-${idx}`} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium">{rel.target}</span>
                               {rel.status && (
@@ -460,7 +495,42 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                                   backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
                                 }}
                               >
-                                {simplifiedType}
+                                {simplifiedType} (Strength: {rel.strength})
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500">How others view {selectedNode.name}:</h4>
+                  <div className="mt-1 max-h-[150px] overflow-y-auto space-y-1">
+                    {relationships
+                      .filter(rel => rel.target === selectedNode.id)
+                      .sort((a, b) => b.strength - a.strength)
+                      .map((rel, idx) => {
+                        const simplifiedType = rel.type.split('-').length === 2 ? 
+                          rel.type.split('-')[1] : rel.type;
+                        
+                        return (
+                          <div key={`incoming-${idx}`} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{rel.source}</span>
+                              {rel.status && (
+                                <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
+                              )}
+                            </div>
+                            <div className="mt-1">
+                              <Badge 
+                                variant="outline"
+                                className="text-xs whitespace-normal break-words"
+                                style={{
+                                  backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
+                                }}
+                              >
+                                {simplifiedType} (Strength: {rel.strength})
                               </Badge>
                             </div>
                           </div>

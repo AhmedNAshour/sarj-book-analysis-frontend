@@ -28,6 +28,8 @@ export interface BookAnalysisMeta {
   chunksProcessed: number;
   characterCount: number;
   relationshipCount: number;
+  relationshipPairsCount?: number;
+  bidirectionalAnalysis?: boolean;
   analysisDate?: string;
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Character, Relationship } from '../types';
-import { BookOpen, Users, Link as LinkIcon, Hash, Award, Zap, Clock, Calendar } from "lucide-react";
+import { BookOpen, Users, Link as LinkIcon, Hash, Award, Zap, Clock, Calendar, ArrowRightLeft } from "lucide-react";
 
 interface BookStatsCardProps {
   title: string;
@@ -75,6 +75,29 @@ const BookStatsCard: React.FC<BookStatsCardProps> = ({
   const topRelationshipTypes = Object.entries(relationshipTypes)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
+
+  // Analyze bi-directional relationships
+  const relationshipPairs = new Map<string, { source: string, target: string, sourceToTarget?: Relationship, targetToSource?: Relationship }>();
+  
+  relationships.forEach(rel => {
+    const pairKey = [rel.source, rel.target].sort().join('->');
+    if (!relationshipPairs.has(pairKey)) {
+      relationshipPairs.set(pairKey, { source: rel.source, target: rel.target });
+    }
+    
+    const pair = relationshipPairs.get(pairKey)!;
+    if (rel.source === pair.source && rel.target === pair.target) {
+      pair.sourceToTarget = rel;
+    } else {
+      pair.targetToSource = rel;
+    }
+  });
+  
+  // Count bidirectional relationship pairs
+  const totalPairs = relationshipPairs.size;
+  const bidirectionalPairs = Array.from(relationshipPairs.values())
+    .filter(pair => pair.sourceToTarget && pair.targetToSource).length;
+  const bidirectionalPercentage = Math.round((bidirectionalPairs / totalPairs) * 100);
 
   return (
     <Card>
@@ -195,27 +218,27 @@ const BookStatsCard: React.FC<BookStatsCardProps> = ({
           )}
           
           {/* Relationship Dynamics - New stats section */}
-          {Object.entries(developmentPatterns).length > 0 && (
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="h-5 w-5 text-indigo-500" />
-                <h3 className="font-medium">Relationship Dynamics</h3>
-              </div>
+          <div className="bg-indigo-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="h-5 w-5 text-indigo-500" />
+              <h3 className="font-medium">Relationship Dynamics</h3>
+            </div>
+            <div className="space-y-2">
               <div className="space-y-2">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Strong Relationships</span>
-                    <span className="text-sm font-medium">{strongRelationships}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Moderate Relationships</span>
-                    <span className="text-sm font-medium">{moderateRelationships}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Weak Relationships</span>
-                    <span className="text-sm font-medium">{weakRelationships}</span>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Strong Relationships</span>
+                  <span className="text-sm font-medium">{strongRelationships}</span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Moderate Relationships</span>
+                  <span className="text-sm font-medium">{moderateRelationships}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Weak Relationships</span>
+                  <span className="text-sm font-medium">{weakRelationships}</span>
+                </div>
+              </div>
+              {Object.entries(developmentPatterns).length > 0 && (
                 <div className="mt-2">
                   <span className="text-sm text-gray-500">Development Patterns:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -226,9 +249,37 @@ const BookStatsCard: React.FC<BookStatsCardProps> = ({
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Bi-directional Relationship Stats - New section */}
+          <div className="bg-teal-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <ArrowRightLeft className="h-5 w-5 text-teal-500" />
+              <h3 className="font-medium">Relationship Perspectives</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Total Character Pairs</span>
+                <span className="text-sm font-medium">{totalPairs}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Bi-directional Pairs</span>
+                <span className="text-sm font-medium">{bidirectionalPairs}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Bi-directional Coverage</span>
+                <span className="text-sm font-medium">{bidirectionalPercentage}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div 
+                  className="bg-teal-500 h-2.5 rounded-full" 
+                  style={{ width: `${bidirectionalPercentage}%` }}
+                ></div>
               </div>
             </div>
-          )}
+          </div>
           
           {/* Analysis Meta Information */}
           <div className="bg-gray-50 p-4 rounded-lg">
