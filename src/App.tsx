@@ -38,7 +38,7 @@ function App() {
           options: {
             provider: "sambanova",
             batchSize: 3,
-            chunkSize: 90000,
+            chunkSize: 30000,
             delayBetweenBatches: 500,
             overrideCache: false
           }
