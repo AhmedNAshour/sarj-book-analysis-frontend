@@ -270,33 +270,6 @@ const RelationshipDetail = ({ relationships, characters, selectedCharacter }: Re
                       <p className="text-sm text-gray-600 mb-2">{pair.targetToSource.description}</p>
                     </div>
                   )}
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {/* Show metadata if either relationship has it */}
-                    {(pair.sourceToTarget?.arcSpan || pair.targetToSource?.arcSpan) && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Arc Span: <span className="font-medium">
-                          {pair.sourceToTarget?.arcSpan || pair.targetToSource?.arcSpan}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {(pair.sourceToTarget?.appearanceCount || pair.targetToSource?.appearanceCount) && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Appearances: <span className="font-medium">
-                          {pair.sourceToTarget?.appearanceCount || pair.targetToSource?.appearanceCount}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {(pair.sourceToTarget?.developmentPattern || pair.targetToSource?.developmentPattern) && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Development: <span className="font-medium">
-                          {pair.sourceToTarget?.developmentPattern || pair.targetToSource?.developmentPattern}
-                        </span>
-                      </div>
-                    )}
-                  </div>
                 </div>
               ))
             ) : (
@@ -338,26 +311,6 @@ const RelationshipDetail = ({ relationships, characters, selectedCharacter }: Re
                   )}
                   
                   <p className="text-sm text-gray-600 mb-3">{rel.description}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {rel.arcSpan && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Arc Span: <span className="font-medium">{rel.arcSpan}</span>
-                      </div>
-                    )}
-                    
-                    {rel.appearanceCount && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Appearances: <span className="font-medium">{rel.appearanceCount}</span>
-                      </div>
-                    )}
-                    
-                    {rel.developmentPattern && (
-                      <div className="text-xs px-2 py-1 bg-gray-100 rounded-md">
-                        Development: <span className="font-medium">{rel.developmentPattern}</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
               ))
             ) : (

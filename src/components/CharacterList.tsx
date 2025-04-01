@@ -39,7 +39,7 @@ interface CharacterListProps {
 
 const CharacterList = ({ characters }: CharacterListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'mentions' | 'alphabetical' | 'arcSpan' | 'appearanceCount'>('mentions');
+  const [sortBy, setSortBy] = useState<'mentions' | 'alphabetical'>('mentions');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
   const filteredCharacters = characters.filter(char => 
@@ -51,10 +51,6 @@ const CharacterList = ({ characters }: CharacterListProps) => {
   const sortedCharacters = [...filteredCharacters].sort((a, b) => {
     if (sortBy === 'mentions') {
       return b.mentions - a.mentions;
-    } else if (sortBy === 'arcSpan') {
-      return (b.arcSpan || 0) - (a.arcSpan || 0);
-    } else if (sortBy === 'appearanceCount') {
-      return (b.appearanceCount || 0) - (a.appearanceCount || 0);
     } else {
       return a.name.localeCompare(b.name);
     }
@@ -96,7 +92,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
         <div className="w-full sm:w-48">
           <Select
             value={sortBy}
-            onValueChange={(value) => setSortBy(value as 'mentions' | 'alphabetical' | 'arcSpan' | 'appearanceCount')}
+            onValueChange={(value) => setSortBy(value as 'mentions' | 'alphabetical')}
           >
             <SelectTrigger>
               <SelectValue placeholder="Sort by" />
@@ -104,8 +100,6 @@ const CharacterList = ({ characters }: CharacterListProps) => {
             <SelectContent>
               <SelectItem value="mentions">Sort by Mentions</SelectItem>
               <SelectItem value="alphabetical">Sort Alphabetically</SelectItem>
-              <SelectItem value="arcSpan">Sort by Arc Span</SelectItem>
-              <SelectItem value="appearanceCount">Sort by Appearances</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -113,76 +107,74 @@ const CharacterList = ({ characters }: CharacterListProps) => {
 
       <Card>
         <CardContent className="p-0">
-          <div className="w-full min-w-max">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Character</TableHead>
-                  <TableHead>Importance</TableHead>
-                  <TableHead className="text-right">Mentions</TableHead>
-                  <TableHead className="text-center">Appearances</TableHead>
-                  <TableHead className="text-center">Arc Span</TableHead>
-                  <TableHead className="w-[100px] text-center">Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedCharacters.map((character) => (
-                  <TableRow 
-                    key={character.name}
-                    onClick={() => openCharacterModal(character)}
-                    className="cursor-pointer hover:bg-gray-50"
-                  >
-                    <TableCell className="font-medium">
-                      {character.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`${importanceColor(character.importance)} capitalize`}>
-                        {character.importance}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{character.mentions}</TableCell>
-                    <TableCell className="text-center">{character.appearanceCount || 'N/A'}</TableCell>
-                    <TableCell className="text-center">{character.arcSpan || 'N/A'}</TableCell>
-                    <TableCell className="text-center">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button 
-                              type="button"
-                              className="inline-flex justify-center items-center text-blue-500 hover:text-blue-700"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openCharacterModal(character);
-                              }}
-                              aria-label={`View details for ${character.name}`}
-                            >
-                              <Info className="h-4 w-4" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View detailed information about {character.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {sortedCharacters.length === 0 && (
+          <div className="max-h-[500px] overflow-y-auto">
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <Table className="min-w-[500px]">
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6">
-                      No characters found matching '{searchTerm}'
-                    </TableCell>
+                    <TableHead className="w-[180px]">Character</TableHead>
+                    <TableHead className="w-[120px]">Importance</TableHead>
+                    <TableHead className="text-right w-[100px]">Mentions</TableHead>
+                    <TableHead className="w-[80px] text-center">Details</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedCharacters.map((character) => (
+                    <TableRow 
+                      key={character.name}
+                      onClick={() => openCharacterModal(character)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <TableCell className="font-medium">
+                        {character.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${importanceColor(character.importance)} capitalize`}>
+                          {character.importance}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{character.mentions}</TableCell>
+                      <TableCell className="text-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button 
+                                type="button"
+                                className="inline-flex justify-center items-center text-blue-500 hover:text-blue-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCharacterModal(character);
+                                }}
+                                aria-label={`View details for ${character.name}`}
+                              >
+                                <Info className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>View detailed information about {character.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {sortedCharacters.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6">
+                        No characters found matching '{searchTerm}'
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Character Details Modal */}
       <Dialog open={!!selectedCharacter} onOpenChange={closeCharacterModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[90vw] max-w-md mx-auto">
           {selectedCharacter && (
             <>
               <DialogHeader>
@@ -212,29 +204,6 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500 mb-2">Description:</h4>
                   <p className="text-sm">{selectedCharacter.description}</p>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {selectedCharacter.appearanceCount && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium">{selectedCharacter.appearanceCount}</div>
-                      <div className="text-xs text-gray-500">Appearances</div>
-                    </div>
-                  )}
-                  
-                  {selectedCharacter.arcSpan && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium">{selectedCharacter.arcSpan}</div>
-                      <div className="text-xs text-gray-500">Arc Span</div>
-                    </div>
-                  )}
-                  
-                  {selectedCharacter.presencePattern && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium text-xs capitalize">{selectedCharacter.presencePattern}</div>
-                      <div className="text-xs text-gray-500">Presence</div>
-                    </div>
-                  )}
                 </div>
               </div>
             </>

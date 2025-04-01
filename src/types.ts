@@ -6,9 +6,6 @@ export interface Character {
   description: string;
   importance: 'major' | 'supporting' | 'minor';
   mentions: number;
-  arcSpan?: number;
-  appearanceCount?: number;
-  presencePattern?: string;
 }
 
 export interface Relationship {
@@ -18,9 +15,6 @@ export interface Relationship {
   description: string;
   strength: number;
   status?: string;
-  arcSpan?: number;
-  appearanceCount?: number;
-  developmentPattern?: string;
 }
 
 export interface BookAnalysisMeta {
@@ -56,9 +50,6 @@ export interface Node {
   importance: string;
   description: string;
   aliases: string[];
-  arcSpan?: number;
-  appearanceCount?: number;
-  presencePattern?: string;
 }
 
 export interface Link {
@@ -68,7 +59,4 @@ export interface Link {
   type: string;
   description: string;
   status?: string;
-  arcSpan?: number;
-  appearanceCount?: number;
-  developmentPattern?: string;
 }

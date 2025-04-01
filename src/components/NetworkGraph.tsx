@@ -38,17 +38,24 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       value: char.mentions || 1,
       importance: char.importance,
       description: char.description || '',
-      aliases: Array.isArray(char.aliases) ? char.aliases : [],
-      arcSpan: char.arcSpan,
-      appearanceCount: char.appearanceCount,
-      presencePattern: char.presencePattern
+      aliases: Array.isArray(char.aliases) ? char.aliases : []
     }));
+
+    // Create a set of valid character names for quick lookup
+    const characterSet = new Set(nodes.map(node => node.id));
 
     // Create a map to deduplicate relationships
     const connectionMap = new Map<string, Link>();
     
     // Process all relationships, but only keep one connection per character pair
+    // and ensure both source and target exist in the nodes array
     relationships.forEach(rel => {
+      // Skip if either source or target doesn't exist in our nodes
+      if (!characterSet.has(rel.source) || !characterSet.has(rel.target)) {
+        console.warn(`Skipping relationship with missing character: ${rel.source} -> ${rel.target}`);
+        return;
+      }
+
       // Create a consistent key for the pair, sorting names to ensure uniqueness
       const pairKey = [rel.source, rel.target].sort().join('->');
       
@@ -62,10 +69,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
             value: rel.strength || 1,
             type: rel.type || '',
             description: rel.description || '',
-            status: rel.status,
-            arcSpan: rel.arcSpan,
-            appearanceCount: rel.appearanceCount,
-            developmentPattern: rel.developmentPattern
+            status: rel.status
           });
         }
       } else {
@@ -76,10 +80,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
           value: rel.strength || 1,
           type: rel.type || '',
           description: rel.description || '',
-          status: rel.status,
-          arcSpan: rel.arcSpan,
-          appearanceCount: rel.appearanceCount,
-          developmentPattern: rel.developmentPattern
+          status: rel.status
         });
       }
     });
@@ -184,14 +185,24 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       .attr('stroke-opacity', 0.6);
     
     // Create the simulation first before using it
-    const simulation = d3.forceSimulation<SimNode>(graphData.nodes as SimNode[])
-      .force('link', d3.forceLink<SimNode, SimLink>(graphData.links as SimLink[])
-        .id(d => d.id)
-        .distance(100)
-        .strength(0.8))
-      .force('charge', d3.forceManyBody<SimNode>().strength(-300))
-      .force('center', d3.forceCenter<SimNode>(width / 2, height / 2))
-      .force('collision', d3.forceCollide<SimNode>().radius(d => Math.sqrt(d.value) * 2 + 12));
+    let simulation;
+    try {
+      simulation = d3.forceSimulation<SimNode>(graphData.nodes as SimNode[])
+        .force('link', d3.forceLink<SimNode, SimLink>(graphData.links as SimLink[])
+          .id(d => d.id)
+          .distance(100)
+          .strength(0.8))
+        .force('charge', d3.forceManyBody<SimNode>().strength(-300))
+        .force('center', d3.forceCenter<SimNode>(width / 2, height / 2))
+        .force('collision', d3.forceCollide<SimNode>().radius(d => Math.sqrt(d.value) * 2 + 12));
+    } catch (err) {
+      console.error('Error initializing D3 force simulation:', err);
+      // Create a fallback simple simulation without links if there was an error
+      simulation = d3.forceSimulation<SimNode>(graphData.nodes as SimNode[])
+        .force('charge', d3.forceManyBody<SimNode>().strength(-300))
+        .force('center', d3.forceCenter<SimNode>(width / 2, height / 2))
+        .force('collision', d3.forceCollide<SimNode>().radius(d => Math.sqrt(d.value) * 2 + 12));
+    }
     
     // Store simulation reference
     simulationRef.current = simulation;
@@ -448,32 +459,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                 </div>
                 
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-2">Character Stats:</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {selectedNode.arcSpan !== undefined && (
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className="font-medium">{selectedNode.arcSpan}</div>
-                        <div className="text-xs text-gray-500">Arc Span</div>
-                      </div>
-                    )}
-                    
-                    {selectedNode.appearanceCount !== undefined && (
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className="font-medium">{selectedNode.appearanceCount}</div>
-                        <div className="text-xs text-gray-500">Appearances</div>
-                      </div>
-                    )}
-                    
-                    {selectedNode.presencePattern && (
-                      <div className="text-center p-2 bg-gray-50 rounded-md">
-                        <div className="font-medium text-xs capitalize">{selectedNode.presencePattern}</div>
-                        <div className="text-xs text-gray-500">Presence</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
                   <h4 className="text-sm font-semibold text-gray-500">How {selectedNode.name} views others:</h4>
                   <ScrollArea className="h-[150px] border rounded-md">
                     <div className="p-2">
@@ -500,7 +485,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                                     backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
                                   }}
                                 >
-                                  {simplifiedType} (Strength: {rel.strength})
+                                  {simplifiedType}
                                 </Badge>
                               </div>
                             </div>
@@ -519,7 +504,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                         .sort((a, b) => b.strength - a.strength)
                         .map((rel, idx) => {
                           const simplifiedType = rel.type.split('-').length === 2 ? 
-                            rel.type.split('-')[1] : rel.type;
+                            rel.type.split('-')[0] : rel.type;
                           
                           return (
                             <div key={`incoming-${idx}`} className="flex flex-col py-2 border-b last:border-0">
@@ -537,7 +522,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                                     backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
                                   }}
                                 >
-                                  {simplifiedType} (Strength: {rel.strength})
+                                  {simplifiedType}
                                 </Badge>
                               </div>
                             </div>
