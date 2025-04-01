@@ -225,7 +225,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
       .attr('fill', d => colorScale(d.importance))
       .attr('stroke', '#1e293b')
       .attr('stroke-width', 1.5)
-      .on('click', (event, d) => {
+      .on('click', (_, d) => {
         setSelectedNode(prev => prev && prev.id === d.id ? null : d);
       });
       

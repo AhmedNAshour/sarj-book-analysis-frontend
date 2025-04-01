@@ -1,20 +1,17 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Character, Relationship } from '../types';
-import { BookOpen, Users, Link as LinkIcon, Hash, Award, Zap, Calendar, ArrowRightLeft } from "lucide-react";
+import { Users, Link as LinkIcon, Award, Zap, Calendar, ArrowRightLeft } from "lucide-react";
 
 interface BookStatsCardProps {
-  title: string;
-  author: string;
-  bookId: string;
+  title?: string;
+  author?: string;
+  bookId?: string;
   characters: Character[];
   relationships: Relationship[];
 }
 
 const BookStatsCard: React.FC<BookStatsCardProps> = ({
-  title,
-  author,
-  bookId,
   characters,
   relationships
 }) => {
