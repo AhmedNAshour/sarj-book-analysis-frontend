@@ -15,6 +15,7 @@ function App() {
   const [bookData, setBookData] = useState<BookAnalysis | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("network");
 
   const fetchBookAnalysis = async (bookId: string) => {
     if (!bookId.trim()) {
@@ -59,7 +60,7 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-16 min-h-screen flex flex-col">
       <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Book Character Network Analyzer</h1>
         <p className="text-gray-500">Enter a book ID to visualize character relationships</p>
@@ -84,7 +85,7 @@ function App() {
       {loading && <LoadingState />}
 
       {!loading && bookData && (
-        <div className="space-y-8">
+        <div className="space-y-8 flex-grow">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -122,8 +123,8 @@ function App() {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="network" className="w-full">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="network" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-4 overflow-x-auto flex whitespace-nowrap sm:whitespace-normal pb-1">
               <TabsTrigger value="network" className="flex items-center gap-1">
                 <Network className="h-4 w-4" />
                 Network Graph
@@ -138,25 +139,31 @@ function App() {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="network" className="h-[600px]">
-              <ErrorBoundary>
-                <NetworkGraph 
-                  characters={bookData.analysis.characters} 
-                  relationships={bookData.analysis.relationships} 
+            <TabsContent value="network">
+              <div className="h-[70vh] max-h-[600px]">
+                <ErrorBoundary>
+                  <NetworkGraph 
+                    characters={bookData.analysis.characters} 
+                    relationships={bookData.analysis.relationships} 
+                  />
+                </ErrorBoundary>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="characters">
+              <div className="max-h-[70vh]">
+                <CharacterList characters={bookData.analysis.characters} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="relationships">
+              <div className="max-h-[70vh]">
+                <RelationshipDetail 
+                  relationships={bookData.analysis.relationships}
+                  characters={bookData.analysis.characters}
+                  interactions={bookData.analysis.interactions || []}
                 />
-              </ErrorBoundary>
-            </TabsContent>
-            
-            <TabsContent value="characters" className="h-[600px]">
-              <CharacterList characters={bookData.analysis.characters} />
-            </TabsContent>
-            
-            <TabsContent value="relationships" className="h-[600px]">
-              <RelationshipDetail 
-                relationships={bookData.analysis.relationships}
-                characters={bookData.analysis.characters}
-                interactions={bookData.analysis.interactions || []}
-              />
+              </div>
             </TabsContent>
           </Tabs>
         </div>

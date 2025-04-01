@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Relationship, Character, Interaction } from '../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 interface RelationshipDetailProps {
   relationships: Relationship[];
@@ -25,6 +33,8 @@ interface RelationshipPair {
 const RelationshipDetail = ({ relationships, characters, interactions = [], selectedCharacter }: RelationshipDetailProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grouped' | 'individual'>('grouped');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Group relationships into bi-directional pairs
   const relationshipPairs: RelationshipPair[] = relationships.reduce((pairs: RelationshipPair[], rel) => {
@@ -161,6 +171,25 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  // Filter and paginate relationships
+  const paginateItems = (items: any[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    return items.slice(startIndex, startIndex + perPage);
+  };
+  
+  // Calculate total pages for pagination
+  const totalPairPages = Math.ceil(filteredPairs.length / itemsPerPage);
+  const totalRelPages = Math.ceil(filteredRelationships.length / itemsPerPage);
+  
+  // Get paginated items based on current view mode
+  const paginatedPairs = paginateItems(filteredPairs, currentPage, itemsPerPage);
+  const paginatedRelationships = paginateItems(filteredRelationships, currentPage, itemsPerPage);
+  
+  // Reset to page 1 when filters or view mode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, viewMode]);
+
   return (
     <Card>
       <CardHeader>
@@ -215,8 +244,8 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
           <TabsContent value="relationships">
             {viewMode === 'grouped' ? (
               <div className="space-y-3">
-                {filteredPairs.length > 0 ? (
-                  filteredPairs.map((pair, index) => {
+                {paginatedPairs.length > 0 ? (
+                  paginatedPairs.map((pair, index) => {
                     // Get character importance for styling
                     const sourceImportance = getCharacterImportance(pair.source);
                     const targetImportance = getCharacterImportance(pair.target);
@@ -228,14 +257,14 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                     );
                     
                     return (
-                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50">
-                        <div className="flex justify-between mb-2">
-                          <div className="flex gap-2 items-center">
-                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'}>
+                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50 overflow-hidden">
+                        <div className="flex flex-wrap justify-between mb-2 gap-2">
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'} className="max-w-[120px] truncate">
                               {pair.source}
                             </Badge>
-                            <ArrowRightLeft className="h-4 w-4 text-gray-500" />
-                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'}>
+                            <ArrowRightLeft className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'} className="max-w-[120px] truncate">
                               {pair.target}
                             </Badge>
                           </div>
@@ -246,18 +275,18 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                         
                         {pair.sourceToTarget && (
                           <div className="mb-2 border-b pb-2">
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-wrap justify-between items-center gap-2">
                               <div className="flex items-center">
-                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500" />
-                                <span className="text-sm font-medium">{pair.source} → {pair.target}</span>
+                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500 flex-shrink-0" />
+                                <span className="text-sm font-medium break-words">{pair.source} → {pair.target}</span>
                               </div>
-                              <Badge variant="outline" className={getRelationshipTypeStyle(pair.sourceToTarget.type)}>
+                              <Badge variant="outline" className={`${getRelationshipTypeStyle(pair.sourceToTarget.type)} break-words max-w-full`}>
                                 {pair.sourceToTarget.type}
                               </Badge>
                             </div>
-                            <p className="text-sm mt-1 text-gray-600">{pair.sourceToTarget.description}</p>
+                            <p className="text-sm mt-1 text-gray-600 break-words">{pair.sourceToTarget.description}</p>
                             {pair.sourceToTarget.status && (
-                              <Badge variant="secondary" className="mt-1 text-xs">
+                              <Badge variant="secondary" className="mt-1 text-xs break-words">
                                 {pair.sourceToTarget.status}
                               </Badge>
                             )}
@@ -273,18 +302,18 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                         
                         {pair.targetToSource && (
                           <div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-wrap justify-between items-center gap-2">
                               <div className="flex items-center">
-                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500" />
-                                <span className="text-sm font-medium">{pair.target} → {pair.source}</span>
+                                <ArrowRight className="h-3 w-3 mr-1 text-gray-500 flex-shrink-0" />
+                                <span className="text-sm font-medium break-words">{pair.target} → {pair.source}</span>
                               </div>
-                              <Badge variant="outline" className={getRelationshipTypeStyle(pair.targetToSource.type)}>
+                              <Badge variant="outline" className={`${getRelationshipTypeStyle(pair.targetToSource.type)} break-words max-w-full`}>
                                 {pair.targetToSource.type}
                               </Badge>
                             </div>
-                            <p className="text-sm mt-1 text-gray-600">{pair.targetToSource.description}</p>
+                            <p className="text-sm mt-1 text-gray-600 break-words">{pair.targetToSource.description}</p>
                             {pair.targetToSource.status && (
-                              <Badge variant="secondary" className="mt-1 text-xs">
+                              <Badge variant="secondary" className="mt-1 text-xs break-words">
                                 {pair.targetToSource.status}
                               </Badge>
                             )}
@@ -305,23 +334,67 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                     No relationships found matching your search
                   </div>
                 )}
+                
+                {filteredPairs.length > itemsPerPage && (
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          aria-disabled={currentPage === 1}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({length: Math.min(5, totalPairPages)}, (_, i) => {
+                        // Show 5 pages max with current page in the middle when possible
+                        let pageNum;
+                        if (totalPairPages <= 5) {
+                          pageNum = i + 1;
+                        } else {
+                          const middleIndex = Math.min(Math.max(currentPage, 3), totalPairPages - 2);
+                          pageNum = i + middleIndex - 2;
+                        }
+                        
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink 
+                              isActive={currentPage === pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(p => Math.min(totalPairPages, p + 1))}
+                          aria-disabled={currentPage === totalPairPages}
+                          className={currentPage === totalPairPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredRelationships.length > 0 ? (
-                  filteredRelationships.map((rel, index) => {
+                {paginatedRelationships.length > 0 ? (
+                  paginatedRelationships.map((rel, index) => {
                     const sourceImportance = getCharacterImportance(rel.source);
                     const targetImportance = getCharacterImportance(rel.target);
                     
                     return (
-                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex gap-1 items-center">
-                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'}>
+                      <div key={index} className="border rounded-md p-3 hover:bg-gray-50 overflow-hidden">
+                        <div className="flex flex-wrap justify-between items-start mb-2 gap-2">
+                          <div className="flex flex-wrap gap-1 items-center">
+                            <Badge variant={sourceImportance === 'major' ? 'default' : 'outline'} className="max-w-[120px] truncate">
                               {rel.source}
                             </Badge>
-                            <ArrowRight className="h-4 w-4 text-gray-500" />
-                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'}>
+                            <ArrowRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <Badge variant={targetImportance === 'major' ? 'default' : 'outline'} className="max-w-[120px] truncate">
                               {rel.target}
                             </Badge>
                           </div>
@@ -337,22 +410,22 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                           </div>
                         </div>
                         
-                        <Badge variant="outline" className={getRelationshipTypeStyle(rel.type)}>
+                        <Badge variant="outline" className={`${getRelationshipTypeStyle(rel.type)} break-words max-w-full`}>
                           {rel.type}
                         </Badge>
                         
-                        <p className="text-sm mt-2 text-gray-600">{rel.description}</p>
+                        <p className="text-sm mt-2 text-gray-600 break-words">{rel.description}</p>
                         
                         {rel.status && (
                           <div className="mt-2">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs break-words">
                               {rel.status}
                             </Badge>
                           </div>
                         )}
                         
                         {rel.evidence && (
-                          <div className="mt-2 text-xs text-gray-500">
+                          <div className="mt-2 text-xs text-gray-500 break-words">
                             <strong>Evidence:</strong> {rel.evidence}
                           </div>
                         )}
@@ -364,6 +437,50 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                     No relationships found matching your search
                   </div>
                 )}
+                
+                {filteredRelationships.length > itemsPerPage && (
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          aria-disabled={currentPage === 1}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({length: Math.min(5, totalRelPages)}, (_, i) => {
+                        // Show 5 pages max with current page in the middle when possible
+                        let pageNum;
+                        if (totalRelPages <= 5) {
+                          pageNum = i + 1;
+                        } else {
+                          const middleIndex = Math.min(Math.max(currentPage, 3), totalRelPages - 2);
+                          pageNum = i + middleIndex - 2;
+                        }
+                        
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink 
+                              isActive={currentPage === pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(p => Math.min(totalRelPages, p + 1))}
+                          aria-disabled={currentPage === totalRelPages}
+                          className={currentPage === totalRelPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
               </div>
             )}
           </TabsContent>
@@ -371,7 +488,7 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
           <TabsContent value="interactions">
             <div className="space-y-3">
               {interactions.length > 0 ? (
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[500px] pb-4">
                   {interactions
                     .filter(interaction => 
                       !selectedCharacter || 
@@ -385,26 +502,27 @@ const RelationshipDetail = ({ relationships, characters, interactions = [], sele
                       )
                     )
                     .map((interaction, index) => (
-                      <div key={index} className="border rounded-md p-3 mb-3 hover:bg-gray-50">
+                      <div key={index} className="border rounded-md p-3 mb-3 hover:bg-gray-50 overflow-hidden">
                         <div className="flex flex-wrap gap-1 mb-2">
                           {interaction.characters.map((char, i) => (
                             <Badge 
                               key={i} 
                               variant={getCharacterImportance(char) === 'major' ? 'default' : 'outline'}
+                              className="max-w-[120px] truncate"
                             >
                               {char}
                             </Badge>
                           ))}
                         </div>
                         
-                        <p className="text-sm">{interaction.description}</p>
+                        <p className="text-sm break-words">{interaction.description}</p>
                         
-                        <div className="flex justify-between mt-2 text-xs text-gray-500">
+                        <div className="flex flex-wrap justify-between mt-2 text-xs text-gray-500 gap-2">
                           {interaction.context && (
-                            <span><strong>Context:</strong> {interaction.context}</span>
+                            <span className="break-words"><strong>Context:</strong> {interaction.context}</span>
                           )}
                           {interaction.type && (
-                            <Badge variant="outline">
+                            <Badge variant="outline" className="break-words">
                               {interaction.type}
                             </Badge>
                           )}

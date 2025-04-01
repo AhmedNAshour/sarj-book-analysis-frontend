@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Character } from '../types';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface CharacterListProps {
   characters: Character[];
@@ -41,6 +49,8 @@ const CharacterList = ({ characters }: CharacterListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'mentions' | 'alphabetical'>('mentions');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredCharacters = characters.filter(char => 
     char.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,6 +87,23 @@ const CharacterList = ({ characters }: CharacterListProps) => {
     setSelectedCharacter(null);
   };
 
+  // Pagination function
+  const paginateCharacters = (chars: Character[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    return chars.slice(startIndex, startIndex + perPage);
+  };
+
+  // Get paginated characters
+  const paginatedCharacters = paginateCharacters(sortedCharacters, currentPage, itemsPerPage);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(sortedCharacters.length / itemsPerPage);
+  
+  // Reset to page 1 when filters or sorting changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortBy]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -107,7 +134,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
 
       <Card>
         <CardContent className="p-0">
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="max-h-[500px] overflow-hidden">
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
               <Table className="min-w-[500px]">
                 <TableHeader>
@@ -119,7 +146,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedCharacters.map((character) => (
+                  {paginatedCharacters.map((character) => (
                     <TableRow 
                       key={character.name}
                       onClick={() => openCharacterModal(character)}
@@ -158,7 +185,7 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {sortedCharacters.length === 0 && (
+                  {paginatedCharacters.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-6">
                         No characters found matching '{searchTerm}'
@@ -169,6 +196,52 @@ const CharacterList = ({ characters }: CharacterListProps) => {
               </Table>
             </div>
           </div>
+          
+          {sortedCharacters.length > itemsPerPage && (
+            <div className="border-t p-2">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      aria-disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({length: Math.min(5, totalPages)}, (_, i) => {
+                    // Show 5 pages max with current page in the middle when possible
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else {
+                      const middleIndex = Math.min(Math.max(currentPage, 3), totalPages - 2);
+                      pageNum = i + middleIndex - 2;
+                    }
+                    
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink 
+                          isActive={currentPage === pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      aria-disabled={currentPage === totalPages}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 
