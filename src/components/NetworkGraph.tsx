@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Character, Relationship, GraphData, Node, Link } from '../types';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 // Define a type that combines Node with SimulationNodeDatum
 type SimNode = Node & d3.SimulationNodeDatum;
@@ -445,98 +447,104 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                   <p className="text-sm mt-1">{selectedNode.description}</p>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2">
-                  {selectedNode.arcSpan !== undefined && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium">{selectedNode.arcSpan}</div>
-                      <div className="text-xs text-gray-500">Arc Span</div>
-                    </div>
-                  )}
-                  
-                  {selectedNode.appearanceCount !== undefined && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium">{selectedNode.appearanceCount}</div>
-                      <div className="text-xs text-gray-500">Appearances</div>
-                    </div>
-                  )}
-                  
-                  {selectedNode.presencePattern && (
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="font-medium text-xs capitalize">{selectedNode.presencePattern}</div>
-                      <div className="text-xs text-gray-500">Presence</div>
-                    </div>
-                  )}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 mb-2">Character Stats:</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {selectedNode.arcSpan !== undefined && (
+                      <div className="text-center p-2 bg-gray-50 rounded-md">
+                        <div className="font-medium">{selectedNode.arcSpan}</div>
+                        <div className="text-xs text-gray-500">Arc Span</div>
+                      </div>
+                    )}
+                    
+                    {selectedNode.appearanceCount !== undefined && (
+                      <div className="text-center p-2 bg-gray-50 rounded-md">
+                        <div className="font-medium">{selectedNode.appearanceCount}</div>
+                        <div className="text-xs text-gray-500">Appearances</div>
+                      </div>
+                    )}
+                    
+                    {selectedNode.presencePattern && (
+                      <div className="text-center p-2 bg-gray-50 rounded-md">
+                        <div className="font-medium text-xs capitalize">{selectedNode.presencePattern}</div>
+                        <div className="text-xs text-gray-500">Presence</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
-                {/* Updated Connections section to show both directions */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500">How {selectedNode.name} views others:</h4>
-                  <div className="mt-1 max-h-[150px] overflow-y-auto space-y-1">
-                    {relationships
-                      .filter(rel => rel.source === selectedNode.id)
-                      .sort((a, b) => b.strength - a.strength)
-                      .map((rel, idx) => {
-                        const simplifiedType = rel.type.split('-').length === 2 ? 
-                          rel.type.split('-')[0] : rel.type;
-                        
-                        return (
-                          <div key={`outgoing-${idx}`} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">{rel.target}</span>
-                              {rel.status && (
-                                <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
-                              )}
+                  <ScrollArea className="h-[150px] border rounded-md">
+                    <div className="p-2">
+                      {relationships
+                        .filter(rel => rel.source === selectedNode.id)
+                        .sort((a, b) => b.strength - a.strength)
+                        .map((rel, idx) => {
+                          const simplifiedType = rel.type.split('-').length === 2 ? 
+                            rel.type.split('-')[0] : rel.type;
+                          
+                          return (
+                            <div key={`outgoing-${idx}`} className="flex flex-col py-2 border-b last:border-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{rel.target}</span>
+                                {rel.status && (
+                                  <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
+                                )}
+                              </div>
+                              <div className="mt-1">
+                                <Badge 
+                                  variant="outline"
+                                  className="text-xs whitespace-normal break-words"
+                                  style={{
+                                    backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
+                                  }}
+                                >
+                                  {simplifiedType} (Strength: {rel.strength})
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="mt-1">
-                              <Badge 
-                                variant="outline"
-                                className="text-xs whitespace-normal break-words"
-                                style={{
-                                  backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
-                                }}
-                              >
-                                {simplifiedType} (Strength: {rel.strength})
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                          );
+                        })}
+                    </div>
+                  </ScrollArea>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500">How others view {selectedNode.name}:</h4>
-                  <div className="mt-1 max-h-[150px] overflow-y-auto space-y-1">
-                    {relationships
-                      .filter(rel => rel.target === selectedNode.id)
-                      .sort((a, b) => b.strength - a.strength)
-                      .map((rel, idx) => {
-                        const simplifiedType = rel.type.split('-').length === 2 ? 
-                          rel.type.split('-')[1] : rel.type;
-                        
-                        return (
-                          <div key={`incoming-${idx}`} className="flex flex-col py-2 px-2 rounded-md hover:bg-gray-50">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">{rel.source}</span>
-                              {rel.status && (
-                                <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
-                              )}
+                  <ScrollArea className="h-[150px] border rounded-md">
+                    <div className="p-2">
+                      {relationships
+                        .filter(rel => rel.target === selectedNode.id)
+                        .sort((a, b) => b.strength - a.strength)
+                        .map((rel, idx) => {
+                          const simplifiedType = rel.type.split('-').length === 2 ? 
+                            rel.type.split('-')[1] : rel.type;
+                          
+                          return (
+                            <div key={`incoming-${idx}`} className="flex flex-col py-2 border-b last:border-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{rel.source}</span>
+                                {rel.status && (
+                                  <span className="text-xs text-gray-500">{rel.status.split(',')[0]}</span>
+                                )}
+                              </div>
+                              <div className="mt-1">
+                                <Badge 
+                                  variant="outline"
+                                  className="text-xs whitespace-normal break-words"
+                                  style={{
+                                    backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
+                                  }}
+                                >
+                                  {simplifiedType} (Strength: {rel.strength})
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="mt-1">
-                              <Badge 
-                                variant="outline"
-                                className="text-xs whitespace-normal break-words"
-                                style={{
-                                  backgroundColor: `rgba(124, 58, 237, ${rel.strength / 20 + 0.1})`
-                                }}
-                              >
-                                {simplifiedType} (Strength: {rel.strength})
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                          );
+                        })}
+                    </div>
+                  </ScrollArea>
                 </div>
               </CardContent>
             </Card>
@@ -559,7 +567,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ characters, relationships }
                     <span className="text-sm">Minor Character</span>
                   </div>
                 </div>
-                <div className="mt-4">
+                <Separator className="my-4" />
+                <div>
                   <p className="text-sm">
                     • Node size indicates number of mentions<br />
                     • Edge thickness shows relationship strength<br />

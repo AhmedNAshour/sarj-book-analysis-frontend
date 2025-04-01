@@ -26,6 +26,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Info, Search } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CharacterListProps {
   characters: Character[];
@@ -138,17 +144,26 @@ const CharacterList = ({ characters }: CharacterListProps) => {
                     <TableCell className="text-center">{character.appearanceCount || 'N/A'}</TableCell>
                     <TableCell className="text-center">{character.arcSpan || 'N/A'}</TableCell>
                     <TableCell className="text-center">
-                      <button 
-                        type="button"
-                        className="inline-flex justify-center items-center text-blue-500 hover:text-blue-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openCharacterModal(character);
-                        }}
-                        aria-label={`View details for ${character.name}`}
-                      >
-                        <Info className="h-4 w-4" />
-                      </button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button 
+                              type="button"
+                              className="inline-flex justify-center items-center text-blue-500 hover:text-blue-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCharacterModal(character);
+                              }}
+                              aria-label={`View details for ${character.name}`}
+                            >
+                              <Info className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View detailed information about {character.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 ))}

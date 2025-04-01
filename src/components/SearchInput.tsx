@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Search, Book } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface SearchInputProps {
   onSearch: (bookId: string) => void;
@@ -19,7 +28,7 @@ const SAMPLE_BOOKS = [
 
 const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
   const [bookId, setBookId] = useState<string>('');
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [open, setOpen] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<typeof SAMPLE_BOOKS>([]);
 
   useEffect(() => {
@@ -39,36 +48,62 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
   const handleSearch = () => {
     if (bookId.trim()) {
       onSearch(bookId.trim());
-      setShowSuggestions(false);
+      setOpen(false);
     }
   };
 
   const handleSelectSuggestion = (id: string) => {
     setBookId(id);
     onSearch(id);
-    setShowSuggestions(false);
+    setOpen(false);
   };
 
   return (
     <div className="relative w-full">
       <div className="flex gap-4">
         <div className="relative flex-grow">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Enter book ID (e.g., 1787 for Hamlet)"
-            value={bookId}
-            onChange={(e) => {
-              setBookId(e.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => {
-              // Delay hiding suggestions to allow for clicks
-              setTimeout(() => setShowSuggestions(false), 200);
-            }}
-            className="pl-9"
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          />
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Enter book ID (e.g., 1787 for Hamlet)"
+                  value={bookId}
+                  onChange={(e) => setBookId(e.target.value)}
+                  onClick={() => setOpen(true)}
+                  className="pl-9"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[300px]" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search books..." 
+                  value={bookId} 
+                  onValueChange={setBookId} 
+                />
+                <CommandList>
+                  <CommandEmpty>No matching books found</CommandEmpty>
+                  <CommandGroup>
+                    {suggestions.map((book) => (
+                      <CommandItem 
+                        key={book.id} 
+                        onSelect={() => handleSelectSuggestion(book.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Book className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">{book.title}</div>
+                          <div className="text-xs text-gray-500">{book.author} (ID: {book.id})</div>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <Button 
           onClick={handleSearch} 
@@ -84,32 +119,6 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
           )}
         </Button>
       </div>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white rounded-md border border-gray-200 shadow-lg max-h-60 overflow-auto">
-          <ul className="py-1">
-            {suggestions.map((book) => (
-              <li 
-                key={book.id}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
-                onClick={() => handleSelectSuggestion(book.id)}
-              >
-                <Book className="h-4 w-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{book.title}</div>
-                  <div className="text-sm text-gray-500">{book.author} (ID: {book.id})</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      
-      {showSuggestions && suggestions.length === 0 && bookId.trim() !== '' && (
-        <div className="absolute z-10 mt-1 w-full bg-white rounded-md border border-gray-200 shadow-lg p-4 text-center text-gray-500">
-          No matching books found
-        </div>
-      )}
     </div>
   );
 };
