@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, Network, Users, Link, Zap, SearchCheck } from "lucide-react";
+import { Book, Network, Users, Link, Zap, SearchCheck, RefreshCw } from "lucide-react";
 import NetworkGraph from './components/NetworkGraph';
 import CharacterList from './components/CharacterList';
 import RelationshipDetail from './components/RelationshipDetails';
@@ -17,8 +17,9 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("network");
   const [analysisMode, setAnalysisMode] = useState<'fast' | 'detailed'>('fast');
+  const [cacheOverride, setCacheOverride] = useState<boolean>(false);
 
-  const fetchBookAnalysis = async (bookId: string, analysisType: 'fast' | 'detailed' = 'fast') => {
+  const fetchBookAnalysis = async (bookId: string, analysisType: 'fast' | 'detailed' = 'fast', overrideCache: boolean = false) => {
     if (!bookId.trim()) {
       setError("Please enter a book ID");
       return;
@@ -27,6 +28,7 @@ function App() {
     setLoading(true);
     setError(null);
     setAnalysisMode(analysisType);
+    setCacheOverride(overrideCache);
 
     try {
       // Use localhost:3000 for development, and the Render backend URL for production
@@ -35,19 +37,24 @@ function App() {
       // Set chunk size based on analysis type
       const chunkSize = analysisType === 'detailed' ? 30000 : 90000;
       
+      const requestOptions = {
+        provider: "sambanova",
+        batchSize: 3,
+        chunkSize: chunkSize,
+        delayBetweenBatches: 500,
+        overrideCache: overrideCache
+      };
+      
+      // Debug what's being sent
+      console.log('Sending API request with options:', JSON.stringify(requestOptions));
+      
       const response = await fetch(`${apiBaseUrl}/api/analysis/${bookId}/full`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          options: {
-            provider: "sambanova",
-            batchSize: 3,
-            chunkSize: chunkSize,
-            delayBetweenBatches: 500,
-            overrideCache: false
-          }
+          options: requestOptions
         })
       });
       
@@ -108,11 +115,21 @@ function App() {
               </span>
               <span>•</span>
               <span>Chunk Size: {analysisMode === 'detailed' ? '30,000' : '90,000'}</span>
+              {cacheOverride && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center text-red-500">
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Cache Override
+                  </span>
+                </>
+              )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {analysisMode === 'detailed' 
                 ? 'Using smaller chunks for more thorough analysis (takes longer)' 
                 : 'Using larger chunks for faster analysis'}
+              {cacheOverride && ' • Ignoring cached results and generating new analysis'}
             </p>
           </div>
         </div>
@@ -164,6 +181,15 @@ function App() {
                     <div className="text-xs text-gray-500">Analysis Type</div>
                   </div>
                 </div>
+                {cacheOverride && (
+                  <div className="bg-red-50 p-3 rounded-md flex items-center gap-2">
+                    <RefreshCw className="h-5 w-5 text-red-500" />
+                    <div>
+                      <div className="text-sm font-medium">Fresh Analysis</div>
+                      <div className="text-xs text-gray-500">Cache Override</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

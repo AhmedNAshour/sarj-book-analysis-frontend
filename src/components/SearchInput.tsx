@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, Book, Zap, SearchCheck } from "lucide-react";
+import { Loader2, Search, Book, Zap, SearchCheck, RefreshCw } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -13,9 +13,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface SearchInputProps {
-  onSearch: (bookId: string, analysisType: 'fast' | 'detailed') => void;
+  onSearch: (bookId: string, analysisType: 'fast' | 'detailed', overrideCache: boolean) => void;
   isLoading: boolean;
 }
 
@@ -28,11 +29,12 @@ const SAMPLE_BOOKS = [
   { id: '2701', title: 'Moby-Dick', author: 'Herman Melville' },
 ];
 
-const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
+const SearchInput = ({ onSearch, isLoading }: SearchInputProps) => {
   const [bookId, setBookId] = useState<string>('');
   const [open, setOpen] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<typeof SAMPLE_BOOKS>([]);
   const [analysisType, setAnalysisType] = useState<'fast' | 'detailed'>('fast');
+  const [overrideCache, setOverrideCache] = useState<boolean>(false);
 
   useEffect(() => {
     // Filter suggestions based on input
@@ -50,7 +52,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
 
   const handleSearch = () => {
     if (bookId.trim()) {
-      onSearch(bookId.trim(), analysisType);
+      onSearch(bookId.trim(), analysisType, overrideCache);
       setOpen(false);
     }
   };
@@ -109,7 +111,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
         </div>
         
         <div className="border rounded-md p-3 bg-gray-50">
-          <p className="text-sm font-medium mb-2">Analysis Type</p>
+          <p className="text-sm font-medium mb-2">Analysis Options</p>
           <RadioGroup value={analysisType} onValueChange={(value: 'fast' | 'detailed') => setAnalysisType(value)} className="flex flex-col gap-2">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="fast" id="fast" />
@@ -132,6 +134,28 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isLoading }) => {
               </Label>
             </div>
           </RadioGroup>
+          
+          <div className="mt-4 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="override-cache" className="flex items-center cursor-pointer">
+                <RefreshCw className={`h-4 w-4 mr-2 ${overrideCache ? 'text-red-500' : 'text-gray-500'}`} />
+                <div>
+                  <span className="font-medium">Override Cache</span>
+                  <p className="text-xs text-gray-500">Force a new analysis even if cached results exist</p>
+                </div>
+              </Label>
+              <Switch 
+                id="override-cache" 
+                checked={overrideCache} 
+                onCheckedChange={setOverrideCache}
+              />
+            </div>
+            {overrideCache && (
+              <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-md flex items-center">
+                <span className="font-medium">Note:</span>&nbsp;This will take longer as it ignores cached analyses.
+              </div>
+            )}
+          </div>
         </div>
         
         <Button 
